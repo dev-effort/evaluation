@@ -7,12 +7,18 @@ description: Format and execute git commits with project conventions (prefix, sc
 **아래 정보를 본인 정보로 수정하세요:**
 
 ```
-DEVELOPER_NAME: 홍길동
-DEVELOPER_EMAIL: hong@example.com
-TEAM_NAME: 프론트엔드팀
-DASHBOARD_API_URL: https://your-project.supabase.co/functions/v1/submit-commit
-DASHBOARD_API_KEY: JW819xGputODAp/SVyAlMH1sR9yP9Yk9XJ9Uesfvf1M=
+DEVELOPER_NAME: 김승준
+DEVELOPER_EMAIL: seungjunkim@mz.co.kr
+TEAM_NAME: Console
+COMMIT_TYPE: develop
+DASHBOARD_API_URL: https://jndewoaceiynicwxwwxe.supabase.co/functions/v1/submit-commit
+DASHBOARD_API_KEY: b98be5fbfda1e18de65167f894ae1a93cec0520b6951cfba3ce4f35de4163ebd
 ```
+
+### COMMIT_TYPE 설명
+- `develop`: 개발 작업 (기능 구현, 버그 수정 등)
+- `meeting`: 회의 관련 작업 (회의록 정리, 기획 논의 등)
+- `chore`: 기타 작업 (환경 설정, 문서화 등)
 
 ---
 
@@ -25,17 +31,30 @@ When files have been staged with `git add`, you will create and execute a git co
 
 ## Commit Message Format
 ```
-git commit -m "<prefix>(<scope>): <commit message>
+git commit -m "<prefix>(<scope>): <요약 메세지 (한글)>
+
+<상세 설명 (한글, 여러 줄 가능)>
+- 변경 사항 1
+- 변경 사항 2
+- 변경 사항 3
 
 Refs: <jira-ticket>
 
 evaluation: <total-score> (complexity: <n>, volume: <n>, thinking: <n>, others: <n>)
-comment: <qualitative-evaluation>
+comment: <정성적 평가 (한글)>
 
 H: <human-time>
 ai driven: <ai-assisted-time>
 productivity: <percentage>%"
 ```
+
+### 커밋 메세지 작성 규칙
+- **요약 메세지**: 변경 사항을 한 줄로 요약 (50자 이내 권장)
+- **상세 설명**: 변경 사항을 구체적으로 설명
+  - 무엇을 변경했는지
+  - 왜 변경했는지
+  - 어떤 영향이 있는지
+- **comment**: 작업의 핵심 가치와 영향을 1-2문장으로 작성
 
 ## Format Rules
 
@@ -87,7 +106,7 @@ productivity: <percentage>%"
 - **2**: Test writing, documentation, refactoring included
 
 ### Qualitative Evaluation (comment)
-Write 1-2 sentences describing the core value, impact, and notable aspects of the work.
+작업의 핵심 가치, 영향, 주목할 만한 점을 한글로 1-2문장으로 작성합니다.
 
 ## Time Estimation Guidelines
 
@@ -107,14 +126,18 @@ Write 1-2 sentences describing the core value, impact, and notable aspects of th
 
 ## Workflow
 
-1. **Check staged files**: Run `git status` to verify files are staged and understand what's being committed
+1. **Check staged files and auto-stage if needed**: Run `git status` to check the current state:
+   - If there are **staged files** ("Changes to be committed"): proceed with those files
+   - If there are **no staged files** but there are **unstaged changes** ("Changes not staged for commit"): run `git add` for all changed files, then proceed
+   - If there are **no changes at all**: inform the user that there's nothing to commit
 
 2. **Get branch name**: Run `git branch --show-current` to extract the Jira ticket ID
 
 3. **Analyze changes**: Run `git diff --staged` to review staged changes and determine:
    - Appropriate prefix (feat/fix/chore/refactor)
    - Correct scope (bo/console) based on file paths or context
-   - Concise, descriptive commit message
+   - 한글로 요약 메세지 작성 (50자 이내)
+   - 한글로 상세 설명 작성 (변경 사항을 bullet point로 정리)
 
 4. **Evaluate the work**: Based on the staged changes, evaluate:
    - **complexity**: Rate 0-4 based on task difficulty
@@ -128,9 +151,13 @@ Write 1-2 sentences describing the core value, impact, and notable aspects of th
 
 5. **Execute commit**: Run `git add` if needed, then execute git commit with the formatted message including evaluation (no confirmation required)
 
-6. **Get commit ID**: After successful commit, run `git rev-parse HEAD` to get the commit hash
+6. **Get commit ID and message**: After successful commit:
+   - Run `git rev-parse HEAD` to get the commit hash
+   - Run `git log -1 --pretty=%B` to get the full commit message (요약 + 상세 설명 포함)
 
 7. **Submit to Dashboard API**: Send the evaluation data using the configuration from "Developer Configuration" section:
+
+**중요**: `message` 필드에는 전체 커밋 메세지(요약 + 상세 설명 + 평가 정보)를 포함해야 합니다.
 
 ```bash
 curl -X POST "{DASHBOARD_API_URL}" \
@@ -138,10 +165,11 @@ curl -X POST "{DASHBOARD_API_URL}" \
   -H "X-API-Key: {DASHBOARD_API_KEY}" \
   -d '{
     "commit_id": "<commit-hash>",
-    "message": "<commit-message>",
+    "message": "<전체 커밋 메세지 (요약 + 상세 설명 포함)>",
     "developer_name": "{DEVELOPER_NAME}",
     "developer_email": "{DEVELOPER_EMAIL}",
     "team_name": "{TEAM_NAME}",
+    "type": "{COMMIT_TYPE}",
     "evaluation": {
       "total": <total-score>,
       "complexity": <complexity-score>,
@@ -161,31 +189,56 @@ curl -X POST "{DASHBOARD_API_URL}" \
 ## Examples
 
 ```bash
-# For a new feature in console module, branch: feature/COM-123-add-dashboard
-git commit -m "feat(console): add dashboard analytics component
+# 신규 기능 추가 예시, branch: feature/COM-123-add-dashboard
+git commit -m "feat(console): 대시보드 분석 컴포넌트 추가
+
+대시보드에 사용자 활동을 분석할 수 있는 컴포넌트를 추가했습니다.
+- 차트 컴포넌트 구현 (라인, 바, 파이 차트)
+- 데이터 fetching 로직 추가
+- 반응형 레이아웃 적용
 
 Refs: COM-123
 
 evaluation: 6 (complexity: 3, volume: 2, thinking: 1, others: 0)
-comment: New analytics dashboard with chart components and data fetching logic
+comment: 차트 컴포넌트와 데이터 fetching 로직을 포함한 분석 대시보드 신규 기능
 
 H: 4h
 ai driven: 40m
 productivity: 600%"
 
-# Get commit ID
+# 버그 수정 예시, branch: bugfix/COM-456-fix-login
+git commit -m "fix(console): 로그인 페이지 무한 리렌더링 수정
+
+React Query의 select 함수가 매 렌더링마다 새로운 참조를 생성하여
+무한 리렌더링이 발생하는 문제를 수정했습니다.
+- useCallback으로 select 함수 래핑
+- 의존성 배열을 빈 배열로 설정하여 참조 안정성 확보
+
+Refs: COM-456
+
+evaluation: 3 (complexity: 1, volume: 1, thinking: 1, others: 0)
+comment: useCallback을 적용하여 React Query select 함수의 참조 안정성 문제 해결
+
+H: 1h
+ai driven: 10m
+productivity: 600%"
+
+# Get commit ID and full message
 COMMIT_ID=$(git rev-parse HEAD)
+COMMIT_MESSAGE=$(git log -1 --pretty=%B)
 
 # Submit to dashboard API (using Developer Configuration values)
-curl -X POST "https://your-project.supabase.co/functions/v1/submit-commit" \
+# message 필드에 전체 커밋 메세지를 포함
+curl -X POST "{DASHBOARD_API_URL}" \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: JW819xGputODAp/SVyAlMH1sR9yP9Yk9XJ9Uesfvf1M=" \
+  -H "X-API-Key: {DASHBOARD_API_KEY}" \
   -d '{
-    "commit_id": "'$COMMIT_ID'",
-    "message": "feat(console): add dashboard analytics component",
-    "developer_name": "홍길동",
-    "developer_email": "hong@example.com",
-    "team_name": "프론트엔드팀",
+    "commit_id": "'"$COMMIT_ID"'",
+    "message": "'"$(echo "$COMMIT_MESSAGE" | sed 's/"/\\"/g' | tr '\n' '\\n')"'",
+    "developer_name": "{DEVELOPER_NAME}",
+    "developer_email": "{DEVELOPER_EMAIL}",
+    "team_name": "{TEAM_NAME}",
+    "type": "{COMMIT_TYPE}",
     "evaluation": {
       "total": 6,
       "complexity": 3,
@@ -193,7 +246,7 @@ curl -X POST "https://your-project.supabase.co/functions/v1/submit-commit" \
       "thinking": 1,
       "others": 0
     },
-    "comment": "New analytics dashboard with chart components and data fetching logic",
+    "comment": "차트 컴포넌트와 데이터 fetching 로직을 포함한 분석 대시보드 신규 기능",
     "work_hours": 4,
     "ai_driven_minutes": 40,
     "productivity": 600
@@ -202,17 +255,19 @@ curl -X POST "https://your-project.supabase.co/functions/v1/submit-commit" \
 
 ## Important Guidelines
 
-- Always verify staged files exist before attempting to commit
+- Auto-stage all changes if no files are staged (see Workflow step 1)
 - If no Jira ticket is found in branch name, ask the user for the ticket ID
 - If scope (bo/console) cannot be determined from file paths, ask the user
-- Keep commit messages concise but descriptive (ideally under 72 characters for the first line)
+- 커밋 메세지는 반드시 한글로 작성 (prefix와 scope는 영문 유지)
+- 요약 메세지는 50자 이내로 간결하게 작성
+- 상세 설명은 변경 사항을 bullet point로 구체적으로 나열
 - If the user provides specific commit message content, incorporate it while maintaining the format
 - Handle edge cases gracefully: unstaged changes, detached HEAD, missing ticket ID
 - If API submission fails, still report the successful commit but warn about the API error
 
 ## Error Handling
 
-- If `git status` shows no staged changes, inform the user and suggest running `git add`
+- If `git status` shows no staged changes AND no unstaged changes, inform the user that there's nothing to commit
 - If branch name doesn't contain a recognizable Jira ticket pattern, prompt for manual input
 - If commit fails, report the error and suggest resolution steps
 - If API submission fails, log the error but don't rollback the commit - the data can be submitted manually later

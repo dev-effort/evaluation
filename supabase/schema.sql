@@ -21,6 +21,9 @@ CREATE TABLE commits (
   message TEXT NOT NULL,
   developer_id UUID REFERENCES developers(id) ON DELETE SET NULL,
 
+  -- Commit type: develop, meeting, chore
+  type TEXT DEFAULT 'develop',
+
   -- Evaluation data
   evaluation_total INTEGER,
   evaluation_complexity INTEGER,

@@ -13,6 +13,7 @@ interface CommitRequest {
   developer_name: string;
   developer_email?: string;
   team_name: string;
+  type?: string;
   evaluation: {
     total: number;
     complexity: number;
@@ -111,6 +112,7 @@ serve(async (req) => {
       commit_id: data.commit_id,
       message: data.message,
       developer_id: developerId,
+      type: data.type || 'develop',
       evaluation_total: data.evaluation.total,
       evaluation_complexity: data.evaluation.complexity,
       evaluation_volume: data.evaluation.volume,

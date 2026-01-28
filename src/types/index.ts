@@ -21,11 +21,14 @@ export interface Evaluation {
   others: number;
 }
 
+export type CommitType = 'develop' | 'meeting' | 'chore';
+
 export interface Commit {
   id: string;
   commit_id: string;
   message: string;
   developer_id: string | null;
+  type: CommitType | null;
   evaluation_total: number | null;
   evaluation_complexity: number | null;
   evaluation_volume: number | null;
@@ -49,6 +52,7 @@ export interface CommitSubmitRequest {
   developer_name: string;
   developer_email?: string;
   team_name: string;
+  type?: CommitType;
   evaluation: Evaluation;
   comment?: string;
   work_hours?: number;
