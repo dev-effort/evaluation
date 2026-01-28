@@ -133,6 +133,7 @@ export function TeamDetail({
                     background: '#1a1a2e',
                     border: '1px solid #333',
                     borderRadius: '4px',
+                    color: '#fff',
                   }}
                 />
                 <Bar dataKey="commits" fill="#6366f1" radius={[0, 4, 4, 0]} name="Commits" />

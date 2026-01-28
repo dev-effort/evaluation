@@ -66,6 +66,7 @@ export function DeveloperStats({ stats, dateRange, onDateRangeChange }: Develope
                     background: '#1a1a2e',
                     border: '1px solid #333',
                     borderRadius: '4px',
+                    color: '#fff',
                   }}
                   formatter={(value, name) => [
                     value,

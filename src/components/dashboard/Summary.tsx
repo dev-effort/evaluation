@@ -86,6 +86,7 @@ export function Summary({ summary, teamStats, dateRange, onDateRangeChange }: Su
                     background: '#1a1a2e',
                     border: '1px solid #333',
                     borderRadius: '4px',
+                    color: '#fff',
                   }}
                 />
                 <Bar dataKey="commits" fill="#6366f1" radius={[4, 4, 0, 0]} />
@@ -122,6 +123,7 @@ export function Summary({ summary, teamStats, dateRange, onDateRangeChange }: Su
                     background: '#1a1a2e',
                     border: '1px solid #333',
                     borderRadius: '4px',
+                    color: '#fff',
                   }}
                 />
               </PieChart>

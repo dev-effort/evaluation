@@ -61,6 +61,7 @@ export function TeamStats({ stats, dateRange, onDateRangeChange }: TeamStatsProp
                     background: '#1a1a2e',
                     border: '1px solid #333',
                     borderRadius: '4px',
+                    color: '#fff',
                   }}
                 />
                 <Bar
@@ -95,6 +96,7 @@ export function TeamStats({ stats, dateRange, onDateRangeChange }: TeamStatsProp
                     background: '#1a1a2e',
                     border: '1px solid #333',
                     borderRadius: '4px',
+                    color: '#fff',
                   }}
                 />
                 <Line

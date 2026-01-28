@@ -256,6 +256,7 @@ export function DeveloperDetail({
                     background: '#1a1a2e',
                     border: '1px solid #333',
                     borderRadius: '4px',
+                    color: '#fff',
                   }}
                 />
                 <Bar dataKey="commits" fill="#6366f1" radius={[4, 4, 0, 0]} />
@@ -309,6 +310,7 @@ export function DeveloperDetail({
                     background: '#1a1a2e',
                     border: '1px solid #333',
                     borderRadius: '4px',
+                    color: '#fff',
                   }}
                   formatter={(value) => [`${value} commits`, 'Count']}
                 />
