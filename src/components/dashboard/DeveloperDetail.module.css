@@ -171,10 +171,43 @@
   margin-bottom: 0.5rem;
 }
 
+.commitHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .commitId {
   font-family: monospace;
   color: #6366f1;
   font-size: 0.875rem;
+}
+
+.typeBadgeDevelop {
+  background: #6366f133;
+  color: #6366f1;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  font-weight: 600;
+}
+
+.typeBadgeMeeting {
+  background: #22c55e33;
+  color: #22c55e;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  font-weight: 600;
+}
+
+.typeBadgeChore {
+  background: #f59e0b33;
+  color: #f59e0b;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  font-weight: 600;
 }
 
 .commitDate {

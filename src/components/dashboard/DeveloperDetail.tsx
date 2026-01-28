@@ -367,7 +367,12 @@ export function DeveloperDetail({
             developerCommits.map((commit) => (
               <div key={commit.id} className={styles.commitCard}>
                 <div className={styles.commitHeader}>
-                  <span className={styles.commitId}>{commit.commit_id.substring(0, 8)}</span>
+                  <div className={styles.commitHeaderLeft}>
+                    <span className={styles.commitId}>{commit.commit_id.substring(0, 8)}</span>
+                    <span className={styles[`typeBadge${(commit.type || 'develop').charAt(0).toUpperCase()}${(commit.type || 'develop').slice(1)}`] || styles.typeBadgeDevelop}>
+                      {(commit.type || 'develop').toUpperCase()}
+                    </span>
+                  </div>
                   <span className={styles.commitDate}>
                     {new Date(commit.created_at).toLocaleString('ko-KR')}
                   </span>
