@@ -346,6 +346,7 @@ export function DeveloperDetail({
                       background: '#1a1a2e',
                       border: '1px solid #333',
                       borderRadius: '4px',
+                      color: '#fff',
                     }}
                     formatter={(value) => [`${value}h`, 'Hours']}
                   />
