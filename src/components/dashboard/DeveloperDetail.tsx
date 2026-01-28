@@ -89,6 +89,35 @@ export function DeveloperDetail({
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   }, [commits, developerId]);
 
+  // Type-based stats calculation (moved before early return to follow Rules of Hooks)
+  const typeStats = useMemo(() => {
+    const types = ['develop', 'meeting', 'chore'] as const;
+    return types.map((type) => {
+      const typeCommits = developerCommits.filter(
+        (c) => (type === 'develop' ? (c.type === 'develop' || c.type === null) : c.type === type)
+      );
+      const count = typeCommits.length;
+      const avgScore = count > 0
+        ? typeCommits.reduce((sum, c) => sum + (c.evaluation_total || 0), 0) / count
+        : 0;
+      const totalWorkHours = typeCommits.reduce((sum, c) => sum + (c.work_hours || 0), 0);
+      const totalAiMinutes = typeCommits.reduce((sum, c) => sum + (c.ai_driven_minutes || 0), 0);
+      const avgProductivity = count > 0
+        ? typeCommits.reduce((sum, c) => sum + (c.productivity || 0), 0) / count
+        : 0;
+
+      return {
+        type,
+        label: type.charAt(0).toUpperCase() + type.slice(1),
+        count,
+        avgScore,
+        totalWorkHours,
+        totalAiMinutes,
+        avgProductivity,
+      };
+    });
+  }, [developerCommits]);
+
   if (!developer) {
     return (
       <div className={styles.container}>
@@ -119,35 +148,6 @@ export function DeveloperDetail({
     .slice(-14);
 
   const teamName = (developer.developer as { teams?: { name: string } }).teams?.name || '-';
-
-  // Type-based stats calculation
-  const typeStats = useMemo(() => {
-    const types = ['develop', 'meeting', 'chore'] as const;
-    return types.map((type) => {
-      const typeCommits = developerCommits.filter(
-        (c) => (type === 'develop' ? (c.type === 'develop' || c.type === null) : c.type === type)
-      );
-      const count = typeCommits.length;
-      const avgScore = count > 0
-        ? typeCommits.reduce((sum, c) => sum + (c.evaluation_total || 0), 0) / count
-        : 0;
-      const totalWorkHours = typeCommits.reduce((sum, c) => sum + (c.work_hours || 0), 0);
-      const totalAiMinutes = typeCommits.reduce((sum, c) => sum + (c.ai_driven_minutes || 0), 0);
-      const avgProductivity = count > 0
-        ? typeCommits.reduce((sum, c) => sum + (c.productivity || 0), 0) / count
-        : 0;
-
-      return {
-        type,
-        label: type.charAt(0).toUpperCase() + type.slice(1),
-        count,
-        avgScore,
-        totalWorkHours,
-        totalAiMinutes,
-        avgProductivity,
-      };
-    });
-  }, [developerCommits]);
 
   const pieChartData = typeStats
     .filter((stat) => stat.count > 0)
@@ -312,6 +312,8 @@ export function DeveloperDetail({
                     borderRadius: '4px',
                     color: '#fff',
                   }}
+                  itemStyle={{ color: '#fff' }}
+                  labelStyle={{ color: '#fff' }}
                   formatter={(value) => [`${value} commits`, 'Count']}
                 />
                 <Legend />
@@ -348,6 +350,8 @@ export function DeveloperDetail({
                       borderRadius: '4px',
                       color: '#fff',
                     }}
+                    itemStyle={{ color: '#fff' }}
+                    labelStyle={{ color: '#fff' }}
                     formatter={(value) => [`${value}h`, 'Hours']}
                   />
                   <Legend />
