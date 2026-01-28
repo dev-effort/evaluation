@@ -116,6 +116,35 @@ export function DeveloperDetail({
 
   const teamName = (developer.developer as { teams?: { name: string } }).teams?.name || '-';
 
+  // Type-based stats calculation
+  const typeStats = useMemo(() => {
+    const types = ['develop', 'meeting', 'chore'] as const;
+    return types.map((type) => {
+      const typeCommits = developerCommits.filter(
+        (c) => (type === 'develop' ? (c.type === 'develop' || c.type === null) : c.type === type)
+      );
+      const count = typeCommits.length;
+      const avgScore = count > 0
+        ? typeCommits.reduce((sum, c) => sum + (c.evaluation_total || 0), 0) / count
+        : 0;
+      const totalWorkHours = typeCommits.reduce((sum, c) => sum + (c.work_hours || 0), 0);
+      const totalAiMinutes = typeCommits.reduce((sum, c) => sum + (c.ai_driven_minutes || 0), 0);
+      const avgProductivity = count > 0
+        ? typeCommits.reduce((sum, c) => sum + (c.productivity || 0), 0) / count
+        : 0;
+
+      return {
+        type,
+        label: type.charAt(0).toUpperCase() + type.slice(1),
+        count,
+        avgScore,
+        totalWorkHours,
+        totalAiMinutes,
+        avgProductivity,
+      };
+    });
+  }, [developerCommits]);
+
   return (
     <div className={styles.container}>
       <div className={styles.header}>
@@ -151,6 +180,40 @@ export function DeveloperDetail({
           <span className={styles.statValue}>{developer.avgProductivity.toFixed(0)}%</span>
           <span className={styles.statLabel}>Avg Productivity</span>
         </div>
+      </div>
+
+      <div className={styles.typeStatsContainer}>
+        {typeStats.map((stat) => (
+          <div key={stat.type} className={styles.typeStatsCard}>
+            <h4 className={styles.typeStatsTitle}>{stat.label}</h4>
+            <div className={styles.typeStatsGrid}>
+              <div className={styles.typeStatItem}>
+                <span className={styles.typeStatValue}>{stat.count}</span>
+                <span className={styles.typeStatLabel}>Commits</span>
+              </div>
+              <div className={styles.typeStatItem}>
+                <span className={styles.typeStatValue}>{stat.avgScore.toFixed(1)}</span>
+                <span className={styles.typeStatLabel}>Avg Score</span>
+              </div>
+              <div className={styles.typeStatItem}>
+                <span className={styles.typeStatValue}>{stat.totalWorkHours.toFixed(1)}h</span>
+                <span className={styles.typeStatLabel}>Work Hours</span>
+              </div>
+              {stat.type === 'develop' && (
+                <>
+                  <div className={styles.typeStatItem}>
+                    <span className={styles.typeStatValue}>{stat.totalAiMinutes}m</span>
+                    <span className={styles.typeStatLabel}>AI Time</span>
+                  </div>
+                  <div className={styles.typeStatItem}>
+                    <span className={styles.typeStatValue}>{stat.avgProductivity.toFixed(0)}%</span>
+                    <span className={styles.typeStatLabel}>Productivity</span>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        ))}
       </div>
 
       <div className={styles.chartsGrid}>
