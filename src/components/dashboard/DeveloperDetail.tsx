@@ -13,6 +13,10 @@ import {
   PolarAngleAxis,
   PolarRadiusAxis,
   Radar,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
 } from 'recharts';
 import type { DeveloperStats, Commit, Developer, Team } from '@/types';
 import { DateFilter } from './DateFilter';
@@ -145,6 +149,15 @@ export function DeveloperDetail({
     });
   }, [developerCommits]);
 
+  const pieChartData = typeStats
+    .filter((stat) => stat.count > 0)
+    .map((stat) => ({
+      name: stat.label,
+      value: stat.count,
+    }));
+
+  const PIE_COLORS = ['#6366f1', '#22c55e', '#f59e0b'];
+
   return (
     <div className={styles.container}>
       <div className={styles.header}>
@@ -254,6 +267,40 @@ export function DeveloperDetail({
                   fillOpacity={0.5}
                 />
               </RadarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className={styles.chartCard}>
+          <h3 className={styles.chartTitle}>Commits by Type</h3>
+          <div className={styles.chartContainer}>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={pieChartData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={100}
+                  paddingAngle={2}
+                  dataKey="value"
+                  label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
+                  labelLine={false}
+                >
+                  {pieChartData.map((_, index) => (
+                    <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  contentStyle={{
+                    background: '#1a1a2e',
+                    border: '1px solid #333',
+                    borderRadius: '4px',
+                  }}
+                  formatter={(value) => [`${value} commits`, 'Count']}
+                />
+                <Legend />
+              </PieChart>
             </ResponsiveContainer>
           </div>
         </div>
