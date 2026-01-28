@@ -61,7 +61,9 @@ productivity: <percentage>%"
 ### Prefixes (choose one based on change type):
 - `feat` - New features or functionality additions
 - `fix` - Bug fixes or error corrections
-- `chore` - Maintenance tasks, configuration changes, refactoring, dependencies
+- `chore` - Maintenance tasks, configuration changes, dependencies
+- `refactor` - refactoring
+- `docs` - documentation
 
 ### Scope (based on module):
 - `bo` - For admin/backoffice related changes
@@ -126,6 +128,8 @@ productivity: <percentage>%"
 
 ## Workflow
 
+### COMMIT_TYPE이 "develop"인 경우 (기본 워크플로우)
+
 1. **Check staged files and auto-stage if needed**: Run `git status` to check the current state:
    - If there are **staged files** ("Changes to be committed"): proceed with those files
    - If there are **no staged files** but there are **unstaged changes** ("Changes not staged for commit"): run `git add` for all changed files, then proceed
@@ -156,6 +160,82 @@ productivity: <percentage>%"
    - Run `git log -1 --pretty=%B` to get the full commit message (요약 + 상세 설명 포함)
 
 7. **Submit to Dashboard API**: Send the evaluation data using the configuration from "Developer Configuration" section:
+
+---
+
+### COMMIT_TYPE이 "develop"이 아닌 경우 (meeting/chore 워크플로우)
+
+COMMIT_TYPE이 `meeting` 또는 `chore`로 설정된 경우, 사용자에게 추가 정보를 입력받아야 합니다.
+
+1. **사용자 입력 요청**: 다음 정보를 사용자에게 질문합니다:
+   - **type**: `meeting` 또는 `chore` 중 선택 (COMMIT_TYPE이 이미 설정되어 있으면 확인만)
+   - **work_hours**: 실제 작업 시간 (예: 1, 1.5, 2 등 숫자로 입력)
+   - **commit_message**: 커밋 메세지 내용 (한글로 작성)
+     - 요약 메세지 (50자 이내)
+     - 상세 설명 (선택사항)
+
+2. **커밋 메세지 포맷**: 입력받은 정보를 기반으로 커밋 메세지 생성:
+   ```
+   chore(console): <요약 메세지>
+
+   <상세 설명 (있는 경우)>
+
+   H: <work_hours>h
+   ```
+
+3. **Execute commit**: 생성된 메세지로 git commit 실행
+
+4. **Get commit ID and message**: After successful commit:
+   - Run `git rev-parse HEAD` to get the commit hash
+   - Run `git log -1 --pretty=%B` to get the full commit message
+
+5. **Submit to Dashboard API**: 입력받은 정보로 API 제출:
+   - `type`: 사용자가 선택한 type (meeting/chore)
+   - `work_hours`: 사용자가 입력한 작업 시간
+   - `evaluation`: meeting/chore의 경우 모든 점수는 0으로 설정
+   - `ai_driven_minutes`: 0 (AI 지원 시간 없음)
+   - `productivity`: 0 (생산성 계산 불가)
+
+#### meeting/chore 커밋 예시
+
+```bash
+# 회의 커밋 예시
+git commit -m "chore(console): 스프린트 계획 회의
+
+- 다음 스프린트 목표 설정
+- 태스크 분배 논의
+- 기술 부채 해결 방안 검토
+
+H: 2h"
+
+# API 제출 (meeting 타입)
+curl -X POST "{DASHBOARD_API_URL}" \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: {DASHBOARD_API_KEY}" \
+  -d '{
+    "commit_id": "<commit-hash>",
+    "message": "<전체 커밋 메세지>",
+    "developer_name": "{DEVELOPER_NAME}",
+    "developer_email": "{DEVELOPER_EMAIL}",
+    "team_name": "{TEAM_NAME}",
+    "type": "meeting",
+    "evaluation": {
+      "total": 0,
+      "complexity": 0,
+      "volume": 0,
+      "thinking": 0,
+      "others": 0
+    },
+    "comment": "스프린트 계획 회의 참여",
+    "work_hours": 2,
+    "ai_driven_minutes": 0,
+    "productivity": 0
+  }'
+```
+
+---
+
+### Dashboard API 제출 상세
 
 **중요**: `message` 필드에는 전체 커밋 메세지(요약 + 상세 설명 + 평가 정보)를 포함해야 합니다.
 
