@@ -1,0 +1,224 @@
+.container {
+  padding: 1.5rem;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.backLink {
+  color: #6366f1;
+  text-decoration: none;
+  font-size: 0.875rem;
+}
+
+.backLink:hover {
+  text-decoration: underline;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #fff;
+}
+
+.team {
+  color: #888;
+  font-size: 0.875rem;
+  padding: 0.25rem 0.75rem;
+  background: #2a2a4a;
+  border-radius: 4px;
+}
+
+.notFound {
+  text-align: center;
+  padding: 3rem;
+  color: #888;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.statCard {
+  background: #1a1a2e;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.statValue {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #6366f1;
+}
+
+.statLabel {
+  font-size: 0.8rem;
+  color: #888;
+}
+
+.chartsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.chartCard {
+  background: #1a1a2e;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 1.25rem;
+}
+
+.chartTitle {
+  margin: 0 0 1rem;
+  font-size: 1rem;
+  color: #fff;
+}
+
+.chartContainer {
+  width: 100%;
+  height: 300px;
+}
+
+.commitsSection {
+  background: #1a1a2e;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 1.25rem;
+}
+
+.commitsList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.noCommits {
+  color: #888;
+  text-align: center;
+  padding: 2rem;
+}
+
+.commitCard {
+  background: #0f0f1a;
+  border: 1px solid #2a2a4a;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.commitHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.commitId {
+  font-family: monospace;
+  color: #6366f1;
+  font-size: 0.875rem;
+}
+
+.commitDate {
+  color: #666;
+  font-size: 0.75rem;
+}
+
+.commitMessage {
+  margin: 0 0 0.75rem;
+  color: #fff;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.messageLine {
+  margin: 0 0 0.25rem;
+}
+
+.messageLine:last-child {
+  margin-bottom: 0;
+}
+
+.bulletList {
+  margin: 0.25rem 0;
+  padding-left: 1.25rem;
+  list-style-type: disc;
+}
+
+.bulletList li {
+  margin: 0.15rem 0;
+  color: #ddd;
+}
+
+.commitMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.evalBadge {
+  background: #22c55e33;
+  color: #22c55e;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.evalDetail {
+  color: #666;
+  font-size: 0.75rem;
+}
+
+.timeBadge {
+  background: #6366f133;
+  color: #6366f1;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+}
+
+.productivityBadge {
+  background: #f59e0b33;
+  color: #f59e0b;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.commitComment {
+  margin: 0.75rem 0 0;
+  padding: 0.75rem;
+  background: #1a1a2e;
+  border-radius: 4px;
+  color: #aaa;
+  font-size: 0.85rem;
+  font-style: italic;
+  line-height: 1.4;
+}
+
+@media (max-width: 900px) {
+  .chartsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .header {
+    flex-wrap: wrap;
+  }
+}

@@ -1,0 +1,40 @@
+.layout {
+  min-height: 100vh;
+  background: #0f0f1a;
+}
+
+.main {
+  margin-left: 220px;
+  margin-top: 60px;
+  min-height: calc(100vh - 60px);
+}
+
+.loading,
+.error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 60px);
+  color: #888;
+  font-size: 1rem;
+}
+
+.error {
+  color: #ef4444;
+}
+
+.retryBtn {
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  background: #6366f1;
+  border: none;
+  border-radius: 4px;
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.retryBtn:hover {
+  background: #5558e3;
+}
