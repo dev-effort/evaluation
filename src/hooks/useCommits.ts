@@ -133,6 +133,12 @@ export function useCommits(): UseCommitsReturn {
           : 0,
       };
 
+      const commitsByType = {
+        develop: devCommits.filter((c) => c.type === 'develop' || c.type === null).length,
+        meeting: devCommits.filter((c) => c.type === 'meeting').length,
+        chore: devCommits.filter((c) => c.type === 'chore').length,
+      };
+
       return {
         developer,
         totalCommits,
@@ -141,6 +147,7 @@ export function useCommits(): UseCommitsReturn {
         totalAiDrivenMinutes,
         avgProductivity,
         evaluationBreakdown,
+        commitsByType,
       };
     });
   }, [commits, developers]);

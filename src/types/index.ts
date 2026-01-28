@@ -73,6 +73,11 @@ export interface DeveloperStats {
     thinking: number;
     others: number;
   };
+  commitsByType: {
+    develop: number;
+    meeting: number;
+    chore: number;
+  };
 }
 
 export interface TeamStats {

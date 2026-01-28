@@ -112,6 +112,9 @@ export function DeveloperStats({ stats, dateRange, onDateRangeChange }: Develope
                 <th>Name</th>
                 <th>Team</th>
                 <th>Commits</th>
+                <th>Develop</th>
+                <th>Meeting</th>
+                <th>Chore</th>
                 <th>Avg Score</th>
                 <th>Work Hours</th>
                 <th>AI Minutes</th>
@@ -128,6 +131,9 @@ export function DeveloperStats({ stats, dateRange, onDateRangeChange }: Develope
                   </td>
                   <td>{(s.developer as { teams?: { name: string } }).teams?.name || '-'}</td>
                   <td>{s.totalCommits}</td>
+                  <td>{s.commitsByType.develop}</td>
+                  <td>{s.commitsByType.meeting}</td>
+                  <td>{s.commitsByType.chore}</td>
                   <td>{s.avgEvaluation.toFixed(1)}</td>
                   <td>{s.totalWorkHours.toFixed(1)}h</td>
                   <td>{s.totalAiDrivenMinutes}m</td>
