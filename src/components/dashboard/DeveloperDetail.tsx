@@ -156,6 +156,19 @@ export function DeveloperDetail({
       value: stat.count,
     }));
 
+  const timeComparisonData = typeStats
+    .map((stat) => {
+      if (stat.type === 'develop') {
+        const hours = stat.totalAiMinutes / 60;
+        return hours > 0 ? { name: 'Develop (AI Time)', value: parseFloat(hours.toFixed(1)) } : null;
+      } else {
+        return stat.totalWorkHours > 0
+          ? { name: `${stat.label} (Work Hours)`, value: parseFloat(stat.totalWorkHours.toFixed(1)) }
+          : null;
+      }
+    })
+    .filter((item): item is { name: string; value: number } => item !== null);
+
   const PIE_COLORS = ['#6366f1', '#22c55e', '#f59e0b'];
 
   return (
@@ -304,6 +317,42 @@ export function DeveloperDetail({
             </ResponsiveContainer>
           </div>
         </div>
+
+        {timeComparisonData.length > 0 && (
+          <div className={styles.chartCard}>
+            <h3 className={styles.chartTitle}>Time Comparison by Type</h3>
+            <div className={styles.chartContainer}>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={timeComparisonData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={100}
+                    paddingAngle={2}
+                    dataKey="value"
+                    label={({ percent }) => `${((percent ?? 0) * 100).toFixed(0)}%`}
+                    labelLine={false}
+                  >
+                    {timeComparisonData.map((_, index) => (
+                      <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{
+                      background: '#1a1a2e',
+                      border: '1px solid #333',
+                      borderRadius: '4px',
+                    }}
+                    formatter={(value) => [`${value}h`, 'Hours']}
+                  />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className={styles.commitsSection}>
