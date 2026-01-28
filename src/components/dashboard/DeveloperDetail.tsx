@@ -92,6 +92,8 @@ export function DeveloperDetail({
   // Type-based stats calculation (moved before early return to follow Rules of Hooks)
   const typeStats = useMemo(() => {
     const types = ['develop', 'meeting', 'chore'] as const;
+    const prefixTypes = ['feat', 'fix', 'chore', 'refactor', 'docs'] as const;
+
     return types.map((type) => {
       const typeCommits = developerCommits.filter(
         (c) => (type === 'develop' ? (c.type === 'develop' || c.type === null) : c.type === type)
@@ -106,6 +108,16 @@ export function DeveloperDetail({
         ? typeCommits.reduce((sum, c) => sum + (c.productivity || 0), 0) / count
         : 0;
 
+      const prefixCounts = type === 'develop'
+        ? prefixTypes.map((prefix) => ({
+            prefix,
+            count: typeCommits.filter((c) =>
+              c.message.toLowerCase().startsWith(`${prefix}(`) ||
+              c.message.toLowerCase().startsWith(`${prefix}:`)
+            ).length,
+          }))
+        : null;
+
       return {
         type,
         label: type.charAt(0).toUpperCase() + type.slice(1),
@@ -114,6 +126,7 @@ export function DeveloperDetail({
         totalWorkHours,
         totalAiMinutes,
         avgProductivity,
+        prefixCounts,
       };
     });
   }, [developerCommits]);
@@ -170,6 +183,15 @@ export function DeveloperDetail({
     .filter((item): item is { name: string; value: number } => item !== null);
 
   const PIE_COLORS = ['#6366f1', '#22c55e', '#f59e0b'];
+  const PREFIX_COLORS = ['#6366f1', '#ef4444', '#f59e0b', '#8b5cf6', '#06b6d4'];
+
+  const developStats = typeStats.find((s) => s.type === 'develop');
+  const prefixPieData = developStats?.prefixCounts
+    ?.filter((p) => p.count > 0)
+    .map((p) => ({
+      name: p.prefix,
+      value: p.count,
+    })) ?? [];
 
   return (
     <div className={styles.container}>
@@ -210,17 +232,31 @@ export function DeveloperDetail({
 
       <div className={styles.typeStatsContainer}>
         {typeStats.map((stat) => (
-          <div key={stat.type} className={styles.typeStatsCard}>
+          <div
+            key={stat.type}
+            className={`${styles.typeStatsCard} ${stat.type === 'develop' ? styles.typeStatsCardDevelop : styles.typeStatsCardSmall}`}
+          >
             <h4 className={styles.typeStatsTitle}>{stat.label}</h4>
             <div className={styles.typeStatsGrid}>
               <div className={styles.typeStatItem}>
                 <span className={styles.typeStatValue}>{stat.count}</span>
                 <span className={styles.typeStatLabel}>Commits</span>
               </div>
-              <div className={styles.typeStatItem}>
-                <span className={styles.typeStatValue}>{stat.avgScore.toFixed(1)}</span>
-                <span className={styles.typeStatLabel}>Avg Score</span>
-              </div>
+              {stat.type === 'develop' && stat.prefixCounts && (
+                <div className={styles.prefixCountsContainer}>
+                  {stat.prefixCounts.map((p) => (
+                    <span key={p.prefix} className={styles.prefixBadge}>
+                      {p.prefix}: {p.count}
+                    </span>
+                  ))}
+                </div>
+              )}
+              {stat.type === 'develop' && (
+                <div className={styles.typeStatItem}>
+                  <span className={styles.typeStatValue}>{stat.avgScore.toFixed(1)}</span>
+                  <span className={styles.typeStatLabel}>Avg Score</span>
+                </div>
+              )}
               <div className={styles.typeStatItem}>
                 <span className={styles.typeStatValue}>{stat.totalWorkHours.toFixed(1)}h</span>
                 <span className={styles.typeStatLabel}>Work Hours</span>
@@ -243,7 +279,7 @@ export function DeveloperDetail({
       </div>
 
       <div className={styles.chartsGrid}>
-        <div className={styles.chartCard}>
+        <div className={`${styles.chartCard} ${styles.chartCardFullWidth}`}>
           <h3 className={styles.chartTitle}>Commits Over Time</h3>
           <div className={styles.chartContainer}>
             <ResponsiveContainer width="100%" height={300}>
@@ -321,6 +357,45 @@ export function DeveloperDetail({
             </ResponsiveContainer>
           </div>
         </div>
+
+        {prefixPieData.length > 0 && (
+          <div className={styles.chartCard}>
+            <h3 className={styles.chartTitle}>Commits by Prefix</h3>
+            <div className={styles.chartContainer}>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={prefixPieData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={100}
+                    paddingAngle={2}
+                    dataKey="value"
+                    label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
+                    labelLine={false}
+                  >
+                    {prefixPieData.map((_, index) => (
+                      <Cell key={`cell-${index}`} fill={PREFIX_COLORS[index % PREFIX_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{
+                      background: '#1a1a2e',
+                      border: '1px solid #333',
+                      borderRadius: '4px',
+                      color: '#fff',
+                    }}
+                    itemStyle={{ color: '#fff' }}
+                    labelStyle={{ color: '#fff' }}
+                    formatter={(value) => [`${value} commits`, 'Count']}
+                  />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        )}
 
         {timeComparisonData.length > 0 && (
           <div className={styles.chartCard}>
