@@ -44,7 +44,7 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 
 function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/evaluation">
       <Routes>
         <Route
           path="/login"
