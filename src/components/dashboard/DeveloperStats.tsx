@@ -12,6 +12,7 @@ import {
   PolarAngleAxis,
   PolarRadiusAxis,
   Radar,
+  Legend,
 } from 'recharts';
 import type { DeveloperStats as DeveloperStatsType } from '@/types';
 import { DateFilter } from './DateFilter';
@@ -26,11 +27,18 @@ interface DeveloperStatsProps {
 export function DeveloperStats({ stats, dateRange, onDateRangeChange }: DeveloperStatsProps) {
   const sortedByCommits = [...stats].sort((a, b) => b.totalCommits - a.totalCommits);
 
-  const commitData = sortedByCommits.slice(0, 10).map((s) => ({
+  const commitData = sortedByCommits.map((s) => ({
     name: s.developer.name,
-    commits: s.totalCommits,
-    avgScore: s.avgEvaluation,
+    develop: s.commitsByType.develop,
+    meeting: s.commitsByType.meeting,
+    chore: s.commitsByType.chore,
   }));
+
+  const TYPE_COLORS = {
+    develop: '#6366f1',
+    meeting: '#22c55e',
+    chore: '#f59e0b',
+  };
 
   const selectedDeveloper = sortedByCommits[0];
   const radarData = selectedDeveloper
@@ -54,9 +62,9 @@ export function DeveloperStats({ stats, dateRange, onDateRangeChange }: Develope
 
       <div className={styles.chartsGrid}>
         <div className={styles.chartCard}>
-          <h3 className={styles.chartTitle}>Top Developers by Commits</h3>
+          <h3 className={styles.chartTitle}>Commits by Developer</h3>
           <div className={styles.chartContainer}>
-            <ResponsiveContainer width="100%" height={350}>
+            <ResponsiveContainer width="100%" height={Math.max(350, sortedByCommits.length * 40)}>
               <BarChart data={commitData} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" stroke="#333" />
                 <XAxis type="number" stroke="#888" />
@@ -68,12 +76,13 @@ export function DeveloperStats({ stats, dateRange, onDateRangeChange }: Develope
                     borderRadius: '4px',
                     color: '#fff',
                   }}
-                  formatter={(value, name) => [
-                    value,
-                    name === 'commits' ? 'Commits' : 'Avg Score',
-                  ]}
+                  itemStyle={{ color: '#fff' }}
+                  labelStyle={{ color: '#fff' }}
                 />
-                <Bar dataKey="commits" fill="#6366f1" radius={[0, 4, 4, 0]} />
+                <Legend />
+                <Bar dataKey="develop" name="Develop" stackId="commits" fill={TYPE_COLORS.develop} />
+                <Bar dataKey="meeting" name="Meeting" stackId="commits" fill={TYPE_COLORS.meeting} />
+                <Bar dataKey="chore" name="Chore" stackId="commits" fill={TYPE_COLORS.chore} radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

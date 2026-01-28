@@ -10,7 +10,7 @@ description: Format and execute git commits with project conventions (prefix, sc
 DEVELOPER_NAME: 김승준
 DEVELOPER_EMAIL: seungjunkim@mz.co.kr
 TEAM_NAME: Console
-COMMIT_TYPE: develop
+COMMIT_TYPE: chore
 DASHBOARD_API_URL: https://jndewoaceiynicwxwwxe.supabase.co/functions/v1/submit-commit
 DASHBOARD_API_KEY: b98be5fbfda1e18de65167f894ae1a93cec0520b6951cfba3ce4f35de4163ebd
 ```
