@@ -13,6 +13,12 @@ export interface Developer {
   team?: Team;
 }
 
+export interface DeveloperTeam {
+  developer_id: string;
+  team_id: string;
+  created_at: string;
+}
+
 export interface Evaluation {
   total: number;
   complexity: number;

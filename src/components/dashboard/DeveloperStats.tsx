@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
   BarChart,
@@ -9,17 +10,19 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts';
-import type { DeveloperStats as DeveloperStatsType } from '@/types';
+import type { DeveloperStats as DeveloperStatsType, DeveloperTeam, Team } from '@/types';
 import { DateFilter } from './DateFilter';
 import styles from './DeveloperStats.module.css';
 
 interface DeveloperStatsProps {
   stats: DeveloperStatsType[];
+  teams: Team[];
+  developerTeams: DeveloperTeam[];
   dateRange: { startDate: string; endDate: string };
   onDateRangeChange: (startDate: string, endDate: string) => void;
 }
 
-export function DeveloperStats({ stats, dateRange, onDateRangeChange }: DeveloperStatsProps) {
+export function DeveloperStats({ stats, teams, developerTeams, dateRange, onDateRangeChange }: DeveloperStatsProps) {
   const sortedByCommits = [...stats].sort((a, b) => b.totalCommits - a.totalCommits);
 
   const commitData = sortedByCommits.map((s) => ({
@@ -53,6 +56,31 @@ export function DeveloperStats({ stats, dateRange, onDateRangeChange }: Develope
     : 0;
   const totalLinesAdded = stats.reduce((sum, s) => sum + s.totalLinesAdded, 0);
   const totalLinesDeleted = stats.reduce((sum, s) => sum + s.totalLinesDeleted, 0);
+
+  // Build team lookup: developerId -> team names
+  const teamMap = useMemo(() => {
+    const tMap = new Map<string, string>();
+    teams.forEach((t) => tMap.set(t.id, t.name));
+
+    const devTeamMap = new Map<string, string[]>();
+    if (developerTeams.length > 0) {
+      developerTeams.forEach((dt) => {
+        const teamName = tMap.get(dt.team_id);
+        if (!teamName) return;
+        const existing = devTeamMap.get(dt.developer_id) || [];
+        existing.push(teamName);
+        devTeamMap.set(dt.developer_id, existing);
+      });
+    } else {
+      stats.forEach((s) => {
+        const teamName = (s.developer as { teams?: { name: string } }).teams?.name;
+        if (teamName) {
+          devTeamMap.set(s.developer.id, [teamName]);
+        }
+      });
+    }
+    return devTeamMap;
+  }, [teams, developerTeams, stats]);
 
   return (
     <div className={styles.container}>
@@ -159,7 +187,14 @@ export function DeveloperStats({ stats, dateRange, onDateRangeChange }: Develope
                       {s.developer.name}
                     </Link>
                   </td>
-                  <td>{(s.developer as { teams?: { name: string } }).teams?.name || '-'}</td>
+                  <td>
+                    <div className={styles.teamBadges}>
+                      {(teamMap.get(s.developer.id) || []).map((name) => (
+                        <span key={name} className={styles.teamBadge}>{name}</span>
+                      ))}
+                      {!(teamMap.get(s.developer.id) || []).length && '-'}
+                    </div>
+                  </td>
                   <td>{s.totalCommits}</td>
                   <td>{s.commitsByType.develop}</td>
                   <td>{s.commitsByType.meeting}</td>

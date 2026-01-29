@@ -14,6 +14,14 @@ CREATE TABLE developers (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Developer-Team junction table (many-to-many)
+CREATE TABLE developer_teams (
+  developer_id UUID REFERENCES developers(id) ON DELETE CASCADE,
+  team_id UUID REFERENCES teams(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  PRIMARY KEY (developer_id, team_id)
+);
+
 -- Commits table
 CREATE TABLE commits (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -48,10 +56,13 @@ CREATE TABLE commits (
 CREATE INDEX idx_commits_developer_id ON commits(developer_id);
 CREATE INDEX idx_commits_created_at ON commits(created_at DESC);
 CREATE INDEX idx_developers_team_id ON developers(team_id);
+CREATE INDEX idx_developer_teams_developer_id ON developer_teams(developer_id);
+CREATE INDEX idx_developer_teams_team_id ON developer_teams(team_id);
 
 -- Enable Row Level Security
 ALTER TABLE teams ENABLE ROW LEVEL SECURITY;
 ALTER TABLE developers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE developer_teams ENABLE ROW LEVEL SECURITY;
 ALTER TABLE commits ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies: Allow authenticated users to read all data
@@ -59,6 +70,9 @@ CREATE POLICY "Allow read for authenticated" ON teams
   FOR SELECT USING (auth.role() = 'authenticated');
 
 CREATE POLICY "Allow read for authenticated" ON developers
+  FOR SELECT USING (auth.role() = 'authenticated');
+
+CREATE POLICY "Allow read for authenticated" ON developer_teams
   FOR SELECT USING (auth.role() = 'authenticated');
 
 CREATE POLICY "Allow read for authenticated" ON commits
@@ -69,6 +83,9 @@ CREATE POLICY "Allow all for service role" ON teams
   FOR ALL USING (auth.jwt() ->> 'role' = 'service_role');
 
 CREATE POLICY "Allow all for service role" ON developers
+  FOR ALL USING (auth.jwt() ->> 'role' = 'service_role');
+
+CREATE POLICY "Allow all for service role" ON developer_teams
   FOR ALL USING (auth.jwt() ->> 'role' = 'service_role');
 
 CREATE POLICY "Allow all for service role" ON commits

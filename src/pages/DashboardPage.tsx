@@ -10,7 +10,7 @@ import { useCommits } from '@/hooks/useCommits';
 import styles from './DashboardPage.module.css';
 
 export function DashboardPage() {
-  const { loading, error, summary, developerStats, teamStats, commits, refetch, dateRange, setDateRange } = useCommits();
+  const { loading, error, summary, developerStats, teamStats, commits, teams, developerTeams, refetch, dateRange, setDateRange } = useCommits();
 
   if (loading) {
     return (
@@ -63,6 +63,8 @@ export function DashboardPage() {
             element={
               <DeveloperStats
                 stats={developerStats}
+                teams={teams}
+                developerTeams={developerTeams}
                 dateRange={dateRange}
                 onDateRangeChange={(start, end) => setDateRange({ startDate: start, endDate: end })}
               />

@@ -109,6 +109,16 @@ serve(async (req) => {
       developerId = newDeveloper.id;
     }
 
+    // Upsert developer-team relationship (many-to-many)
+    const { error: dtError } = await supabase
+      .from("developer_teams")
+      .upsert(
+        { developer_id: developerId, team_id: teamId },
+        { onConflict: "developer_id,team_id" }
+      );
+
+    if (dtError) throw dtError;
+
     // Insert commit
     const { error: commitError } = await supabase.from("commits").insert({
       commit_id: data.commit_id,

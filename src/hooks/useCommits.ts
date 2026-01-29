@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 import type {
   Commit,
   Developer,
+  DeveloperTeam,
   Team,
   DeveloperStats,
   TeamStats,
@@ -22,6 +23,7 @@ interface UseCommitsReturn {
   commits: CommitWithRelations[];
   developers: Developer[];
   teams: Team[];
+  developerTeams: DeveloperTeam[];
   loading: boolean;
   error: string | null;
   refetch: () => Promise<void>;
@@ -36,6 +38,7 @@ export function useCommits(): UseCommitsReturn {
   const [commits, setCommits] = useState<CommitWithRelations[]>([]);
   const [developers, setDevelopers] = useState<Developer[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
+  const [developerTeams, setDeveloperTeams] = useState<DeveloperTeam[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState<DateRange>(() => {
@@ -60,7 +63,7 @@ export function useCommits(): UseCommitsReturn {
           *,
           developers (
             *,
-            teams (*)
+            teams!developers_team_id_fkey (*)
           )
         `)
         .order('created_at', { ascending: false });
@@ -74,7 +77,7 @@ export function useCommits(): UseCommitsReturn {
 
       const [commitsRes, developersRes, teamsRes] = await Promise.all([
         commitsQuery,
-        supabase.from('developers').select('*, teams (*)'),
+        supabase.from('developers').select('*, teams!developers_team_id_fkey (*)'),
         supabase.from('teams').select('*'),
       ]);
 
@@ -85,6 +88,12 @@ export function useCommits(): UseCommitsReturn {
       setCommits(commitsRes.data || []);
       setDevelopers(developersRes.data || []);
       setTeams(teamsRes.data || []);
+
+      // developer_teams 테이블이 없을 수 있으므로 별도 처리
+      const devTeamsRes = await supabase.from('developer_teams').select('*');
+      if (!devTeamsRes.error) {
+        setDeveloperTeams(devTeamsRes.data || []);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch data');
     } finally {
@@ -177,9 +186,13 @@ export function useCommits(): UseCommitsReturn {
 
   const teamStats = useMemo((): TeamStats[] => {
     return teams.map((team) => {
-      const teamDevs = developerStats.filter(
-        (ds) => ds.developer.team_id === team.id
-      );
+      const teamDevs = developerTeams.length > 0
+        ? developerStats.filter((ds) =>
+            developerTeams.some(
+              (dt) => dt.team_id === team.id && dt.developer_id === ds.developer.id
+            )
+          )
+        : developerStats.filter((ds) => ds.developer.team_id === team.id);
 
       const totalCommits = teamDevs.reduce((sum, ds) => sum + ds.totalCommits, 0);
       const avgEvaluation = teamDevs.length > 0
@@ -199,7 +212,7 @@ export function useCommits(): UseCommitsReturn {
         totalWorkHours,
       };
     });
-  }, [teams, developerStats]);
+  }, [teams, developerStats, developerTeams]);
 
   const summary = useMemo((): DashboardSummary => {
     const totalCommits = commits.length;
@@ -233,6 +246,7 @@ export function useCommits(): UseCommitsReturn {
     commits: commits,
     developers,
     teams,
+    developerTeams,
     loading,
     error,
     refetch: fetchData,
