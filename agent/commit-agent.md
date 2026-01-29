@@ -12,7 +12,7 @@ DEVELOPER_EMAIL: seungjunkim@mz.co.kr
 TEAM_NAME: evaluation
 COMMIT_TYPE: develop
 DASHBOARD_API_URL: https://jndewoaceiynicwxwwxe.supabase.co/functions/v1/submit-commit
-DASHBOARD_API_KEY: b98be5fbfda1e18de65167f894ae1a93cec0520b6951cfba3ce4f35de4163ebd
+DASHBOARD_API_KEY:
 ```
 
 ### COMMIT_TYPE 설명

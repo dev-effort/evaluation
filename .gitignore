@@ -27,5 +27,8 @@ yarn-error.log*
 .DS_Store
 *.pem
 
+# Claude
+.claude/commands/git-commit-formatter.md
+
 # Vercel
 .vercel
