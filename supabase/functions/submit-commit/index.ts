@@ -124,6 +124,7 @@ serve(async (req) => {
       commit_id: data.commit_id,
       message: data.message,
       developer_id: developerId,
+      team_id: teamId,
       type: data.type || 'develop',
       evaluation_total: data.evaluation.total,
       evaluation_complexity: data.evaluation.complexity,

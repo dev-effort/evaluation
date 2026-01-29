@@ -34,6 +34,7 @@ export interface Commit {
   commit_id: string;
   message: string;
   developer_id: string | null;
+  team_id: string | null;
   type: CommitType | null;
   evaluation_total: number | null;
   evaluation_complexity: number | null;
@@ -103,6 +104,7 @@ export interface TeamStats {
   totalCommits: number;
   avgEvaluation: number;
   totalWorkHours: number;
+  totalAiDrivenMinutes: number;
 }
 
 export interface DashboardSummary {

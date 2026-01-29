@@ -34,6 +34,67 @@ interface UseCommitsReturn {
   setDateRange: (range: DateRange) => void;
 }
 
+function computeDevStats(developer: Developer, devCommits: Commit[]): DeveloperStats {
+  const totalCommits = devCommits.length;
+  const avgEvaluation = totalCommits > 0
+    ? devCommits.reduce((sum, c) => sum + (c.evaluation_total || 0), 0) / totalCommits
+    : 0;
+  const totalWorkHours = devCommits.reduce((sum, c) => sum + (c.work_hours || 0), 0);
+  const totalAiDrivenMinutes = devCommits.reduce((sum, c) => sum + (c.ai_driven_minutes || 0), 0);
+  const totalLinesAdded = devCommits.reduce((sum, c) => sum + (c.lines_added || 0), 0);
+  const totalLinesDeleted = devCommits.reduce((sum, c) => sum + (c.lines_deleted || 0), 0);
+  const avgProductivity = totalCommits > 0
+    ? devCommits.reduce((sum, c) => sum + (c.productivity || 0), 0) / totalCommits
+    : 0;
+
+  const evaluationBreakdown = {
+    complexity: totalCommits > 0
+      ? devCommits.reduce((sum, c) => sum + (c.evaluation_complexity || 0), 0) / totalCommits
+      : 0,
+    volume: totalCommits > 0
+      ? devCommits.reduce((sum, c) => sum + (c.evaluation_volume || 0), 0) / totalCommits
+      : 0,
+    thinking: totalCommits > 0
+      ? devCommits.reduce((sum, c) => sum + (c.evaluation_thinking || 0), 0) / totalCommits
+      : 0,
+    others: totalCommits > 0
+      ? devCommits.reduce((sum, c) => sum + (c.evaluation_others || 0), 0) / totalCommits
+      : 0,
+  };
+
+  const commitsByType = {
+    develop: devCommits.filter((c) => c.type === 'develop' || c.type === null).length,
+    meeting: devCommits.filter((c) => c.type === 'meeting').length,
+    chore: devCommits.filter((c) => c.type === 'chore').length,
+  };
+
+  const workHoursByType = {
+    develop: devCommits
+      .filter((c) => c.type === 'develop' || c.type === null)
+      .reduce((sum, c) => sum + (c.work_hours || 0), 0),
+    meeting: devCommits
+      .filter((c) => c.type === 'meeting')
+      .reduce((sum, c) => sum + (c.work_hours || 0), 0),
+    chore: devCommits
+      .filter((c) => c.type === 'chore')
+      .reduce((sum, c) => sum + (c.work_hours || 0), 0),
+  };
+
+  return {
+    developer,
+    totalCommits,
+    avgEvaluation,
+    totalWorkHours,
+    totalAiDrivenMinutes,
+    totalLinesAdded,
+    totalLinesDeleted,
+    avgProductivity,
+    evaluationBreakdown,
+    commitsByType,
+    workHoursByType,
+  };
+}
+
 export function useCommits(): UseCommitsReturn {
   const [commits, setCommits] = useState<CommitWithRelations[]>([]);
   const [developers, setDevelopers] = useState<Developer[]>([]);
@@ -107,102 +168,38 @@ export function useCommits(): UseCommitsReturn {
 
   const developerStats = useMemo((): DeveloperStats[] => {
     return developers.map((developer) => {
-      const devCommits = commits.filter(
-        (c) => c.developer_id === developer.id
-      );
-
-      const totalCommits = devCommits.length;
-      const avgEvaluation = totalCommits > 0
-        ? devCommits.reduce((sum, c) => sum + (c.evaluation_total || 0), 0) / totalCommits
-        : 0;
-      const totalWorkHours = devCommits.reduce(
-        (sum, c) => sum + (c.work_hours || 0),
-        0
-      );
-      const totalAiDrivenMinutes = devCommits.reduce(
-        (sum, c) => sum + (c.ai_driven_minutes || 0),
-        0
-      );
-      const totalLinesAdded = devCommits.reduce(
-        (sum, c) => sum + (c.lines_added || 0),
-        0
-      );
-      const totalLinesDeleted = devCommits.reduce(
-        (sum, c) => sum + (c.lines_deleted || 0),
-        0
-      );
-      const avgProductivity = totalCommits > 0
-        ? devCommits.reduce((sum, c) => sum + (c.productivity || 0), 0) / totalCommits
-        : 0;
-
-      const evaluationBreakdown = {
-        complexity: totalCommits > 0
-          ? devCommits.reduce((sum, c) => sum + (c.evaluation_complexity || 0), 0) / totalCommits
-          : 0,
-        volume: totalCommits > 0
-          ? devCommits.reduce((sum, c) => sum + (c.evaluation_volume || 0), 0) / totalCommits
-          : 0,
-        thinking: totalCommits > 0
-          ? devCommits.reduce((sum, c) => sum + (c.evaluation_thinking || 0), 0) / totalCommits
-          : 0,
-        others: totalCommits > 0
-          ? devCommits.reduce((sum, c) => sum + (c.evaluation_others || 0), 0) / totalCommits
-          : 0,
-      };
-
-      const commitsByType = {
-        develop: devCommits.filter((c) => c.type === 'develop' || c.type === null).length,
-        meeting: devCommits.filter((c) => c.type === 'meeting').length,
-        chore: devCommits.filter((c) => c.type === 'chore').length,
-      };
-
-      const workHoursByType = {
-        develop: devCommits
-          .filter((c) => c.type === 'develop' || c.type === null)
-          .reduce((sum, c) => sum + (c.work_hours || 0), 0),
-        meeting: devCommits
-          .filter((c) => c.type === 'meeting')
-          .reduce((sum, c) => sum + (c.work_hours || 0), 0),
-        chore: devCommits
-          .filter((c) => c.type === 'chore')
-          .reduce((sum, c) => sum + (c.work_hours || 0), 0),
-      };
-
-      return {
-        developer,
-        totalCommits,
-        avgEvaluation,
-        totalWorkHours,
-        totalAiDrivenMinutes,
-        totalLinesAdded,
-        totalLinesDeleted,
-        avgProductivity,
-        evaluationBreakdown,
-        commitsByType,
-        workHoursByType,
-      };
+      const devCommits = commits.filter((c) => c.developer_id === developer.id);
+      return computeDevStats(developer, devCommits);
     });
   }, [commits, developers]);
 
   const teamStats = useMemo((): TeamStats[] => {
     return teams.map((team) => {
-      const teamDevs = developerTeams.length > 0
-        ? developerStats.filter((ds) =>
-            developerTeams.some(
-              (dt) => dt.team_id === team.id && dt.developer_id === ds.developer.id
-            )
-          )
-        : developerStats.filter((ds) => ds.developer.team_id === team.id);
+      // Group commits by team_id on the commit itself
+      const teamCommits = commits.filter((c) => c.team_id === team.id);
 
-      const totalCommits = teamDevs.reduce((sum, ds) => sum + ds.totalCommits, 0);
-      const avgEvaluation = teamDevs.length > 0
-        ? teamDevs.reduce((sum, ds) => sum + ds.avgEvaluation * ds.totalCommits, 0) /
-          (totalCommits || 1)
+      // Build per-developer stats from this team's commits
+      const devCommitsMap = new Map<string, CommitWithRelations[]>();
+      teamCommits.forEach((c) => {
+        if (!c.developer_id) return;
+        const arr = devCommitsMap.get(c.developer_id) || [];
+        arr.push(c);
+        devCommitsMap.set(c.developer_id, arr);
+      });
+
+      const teamDevs: DeveloperStats[] = [];
+      devCommitsMap.forEach((devCommits, devId) => {
+        const developer = developers.find((d) => d.id === devId);
+        if (!developer) return;
+        teamDevs.push(computeDevStats(developer, devCommits));
+      });
+
+      const totalCommits = teamCommits.length;
+      const avgEvaluation = totalCommits > 0
+        ? teamCommits.reduce((sum, c) => sum + (c.evaluation_total || 0), 0) / totalCommits
         : 0;
-      const totalWorkHours = teamDevs.reduce(
-        (sum, ds) => sum + ds.totalWorkHours,
-        0
-      );
+      const totalWorkHours = teamCommits.reduce((sum, c) => sum + (c.work_hours || 0), 0);
+      const totalAiDrivenMinutes = teamCommits.reduce((sum, c) => sum + (c.ai_driven_minutes || 0), 0);
 
       return {
         team,
@@ -210,9 +207,10 @@ export function useCommits(): UseCommitsReturn {
         totalCommits,
         avgEvaluation,
         totalWorkHours,
+        totalAiDrivenMinutes,
       };
     });
-  }, [teams, developerStats, developerTeams]);
+  }, [teams, commits, developers]);
 
   const summary = useMemo((): DashboardSummary => {
     const totalCommits = commits.length;

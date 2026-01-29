@@ -28,6 +28,7 @@ CREATE TABLE commits (
   commit_id TEXT NOT NULL UNIQUE,
   message TEXT NOT NULL,
   developer_id UUID REFERENCES developers(id) ON DELETE SET NULL,
+  team_id UUID REFERENCES teams(id) ON DELETE SET NULL,
 
   -- Commit type: develop, meeting, chore
   type TEXT DEFAULT 'develop',
@@ -54,6 +55,7 @@ CREATE TABLE commits (
 
 -- Indexes for better query performance
 CREATE INDEX idx_commits_developer_id ON commits(developer_id);
+CREATE INDEX idx_commits_team_id ON commits(team_id);
 CREATE INDEX idx_commits_created_at ON commits(created_at DESC);
 CREATE INDEX idx_developers_team_id ON developers(team_id);
 CREATE INDEX idx_developer_teams_developer_id ON developer_teams(developer_id);

@@ -129,10 +129,7 @@ export function TeamStats({ stats, dateRange, onDateRangeChange }: TeamStatsProp
               </tr>
             </thead>
             <tbody>
-              {sortedByCommits.map((s) => {
-                const totalScore = s.developers.reduce((sum, d) => sum + d.avgEvaluation * d.totalCommits, 0);
-                const totalAiMinutes = s.developers.reduce((sum, d) => sum + d.totalAiDrivenMinutes, 0);
-                return (
+              {sortedByCommits.map((s) => (
                   <tr key={s.team.id}>
                     <td>
                       <Link to={`/teams/${s.team.id}`} className={styles.teamLink}>
@@ -141,13 +138,12 @@ export function TeamStats({ stats, dateRange, onDateRangeChange }: TeamStatsProp
                     </td>
                     <td>{s.developers.length}</td>
                     <td>{s.totalCommits}</td>
-                    <td>{totalScore.toFixed(0)}</td>
+                    <td>{(s.avgEvaluation * s.totalCommits).toFixed(0)}</td>
                     <td>{s.avgEvaluation.toFixed(1)}</td>
                     <td>{s.totalWorkHours.toFixed(1)}h</td>
-                    <td>{(totalAiMinutes / 60).toFixed(1)}h</td>
+                    <td>{(s.totalAiDrivenMinutes / 60).toFixed(1)}h</td>
                   </tr>
-                );
-              })}
+              ))}
             </tbody>
           </table>
         </div>

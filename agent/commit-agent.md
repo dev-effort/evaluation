@@ -65,8 +65,8 @@ productivity: <percentage>%"
 ### Prefixes (choose one based on change type):
 
 - `feat` - New features or functionality additions
-- `fix` - Bug fixes or error corrections
-- `chore` - Maintenance tasks, configuration changes, dependencies
+- `fix` - Bug fixes or error corrections, Maintenance tasks
+- `chore` - configuration changes, dependencies
 - `refactor` - refactoring
 - `docs` - documentation
 

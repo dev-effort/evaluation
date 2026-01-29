@@ -81,14 +81,8 @@ export function TeamDetail({
     );
   }
 
-  const totalScore = team.developers.reduce(
-    (sum, d) => sum + d.avgEvaluation * d.totalCommits,
-    0
-  );
-  const totalAiMinutes = team.developers.reduce(
-    (sum, d) => sum + d.totalAiDrivenMinutes,
-    0
-  );
+  const totalScore = team.avgEvaluation * team.totalCommits;
+  const totalAiMinutes = team.totalAiDrivenMinutes;
   const totalLinesAdded = team.developers.reduce(
     (sum, d) => sum + d.totalLinesAdded,
     0
