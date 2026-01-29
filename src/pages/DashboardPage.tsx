@@ -63,6 +63,7 @@ export function DashboardPage() {
             element={
               <DeveloperStats
                 stats={developerStats}
+                teamStats={teamStats}
                 teams={teams}
                 developerTeams={developerTeams}
                 dateRange={dateRange}

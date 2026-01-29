@@ -116,6 +116,44 @@
   white-space: nowrap;
 }
 
+.nameCell {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.expandIcon {
+  color: #888;
+  font-size: 0.75rem;
+  width: 1rem;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.expandableRow {
+  cursor: pointer;
+}
+
+.expandableRow:hover {
+  background: rgba(99, 102, 241, 0.06);
+}
+
+.subRow {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.subRow td {
+  color: #aaa;
+  font-size: 0.8125rem;
+  border-bottom: 1px solid #2a2a3e;
+}
+
+.teamBadgeAll {
+  background: #22c55e20;
+  color: #86efac;
+  border-color: #22c55e40;
+}
+
 .developerLink {
   color: #6366f1;
   text-decoration: none;

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState, Fragment } from 'react';
 import { Link } from 'react-router-dom';
 import {
   BarChart,
@@ -10,19 +10,47 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts';
-import type { DeveloperStats as DeveloperStatsType, DeveloperTeam, Team } from '@/types';
+import type { DeveloperStats as DeveloperStatsType, DeveloperTeam, Team, TeamStats as TeamStatsType } from '@/types';
 import { DateFilter } from './DateFilter';
 import styles from './DeveloperStats.module.css';
 
 interface DeveloperStatsProps {
   stats: DeveloperStatsType[];
+  teamStats: TeamStatsType[];
   teams: Team[];
   developerTeams: DeveloperTeam[];
   dateRange: { startDate: string; endDate: string };
   onDateRangeChange: (startDate: string, endDate: string) => void;
 }
 
-export function DeveloperStats({ stats, teams, developerTeams, dateRange, onDateRangeChange }: DeveloperStatsProps) {
+export function DeveloperStats({ stats, teamStats, teams, developerTeams, dateRange, onDateRangeChange }: DeveloperStatsProps) {
+  const [expandedDevs, setExpandedDevs] = useState<Set<string>>(new Set());
+
+  const toggleExpand = (devId: string) => {
+    setExpandedDevs((prev) => {
+      const next = new Set(prev);
+      if (next.has(devId)) {
+        next.delete(devId);
+      } else {
+        next.add(devId);
+      }
+      return next;
+    });
+  };
+
+  // Build per-developer per-team stats from teamStats
+  const devTeamStatsMap = useMemo(() => {
+    const map = new Map<string, { team: Team; stats: DeveloperStatsType }[]>();
+    teamStats.forEach((ts) => {
+      ts.developers.forEach((devStat) => {
+        const devId = devStat.developer.id;
+        const arr = map.get(devId) || [];
+        arr.push({ team: ts.team, stats: devStat });
+        map.set(devId, arr);
+      });
+    });
+    return map;
+  }, [teamStats]);
   const sortedByCommits = [...stats].sort((a, b) => b.totalCommits - a.totalCommits);
 
   const commitData = sortedByCommits.map((s) => ({
@@ -180,36 +208,86 @@ export function DeveloperStats({ stats, teams, developerTeams, dateRange, onDate
               </tr>
             </thead>
             <tbody>
-              {sortedByCommits.map((s) => (
-                <tr key={s.developer.id}>
-                  <td>
-                    <Link to={`/developers/${s.developer.id}`} className={styles.developerLink}>
-                      {s.developer.name}
-                    </Link>
-                  </td>
-                  <td>
-                    <div className={styles.teamBadges}>
-                      {(teamMap.get(s.developer.id) || []).map((name) => (
-                        <span key={name} className={styles.teamBadge}>{name}</span>
-                      ))}
-                      {!(teamMap.get(s.developer.id) || []).length && '-'}
-                    </div>
-                  </td>
-                  <td>{s.totalCommits}</td>
-                  <td>{s.commitsByType.develop}</td>
-                  <td>{s.commitsByType.meeting}</td>
-                  <td>{s.commitsByType.chore}</td>
-                  <td>{s.avgEvaluation.toFixed(1)}</td>
-                  <td>
-                    <span style={{ color: '#22c55e' }}>+{s.totalLinesAdded}</span>
-                    {' / '}
-                    <span style={{ color: '#ef4444' }}>-{s.totalLinesDeleted}</span>
-                  </td>
-                  <td>{s.totalWorkHours.toFixed(1)}h</td>
-                  <td>{s.totalAiDrivenMinutes}m</td>
-                  <td>{s.avgProductivity.toFixed(0)}%</td>
-                </tr>
-              ))}
+              {sortedByCommits.map((s) => {
+                const devId = s.developer.id;
+                const perTeam = devTeamStatsMap.get(devId) || [];
+                const isMultiTeam = perTeam.length > 1;
+                const isExpanded = expandedDevs.has(devId);
+
+                return (
+                  <Fragment key={devId}>
+                    <tr
+                      className={isMultiTeam ? styles.expandableRow : undefined}
+                      onClick={isMultiTeam ? () => toggleExpand(devId) : undefined}
+                    >
+                      <td>
+                        <div className={styles.nameCell}>
+                          {isMultiTeam && (
+                            <span className={styles.expandIcon}>{isExpanded ? '▾' : '▸'}</span>
+                          )}
+                          <Link
+                            to={`/developers/${devId}`}
+                            className={styles.developerLink}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {s.developer.name}
+                          </Link>
+                        </div>
+                      </td>
+                      <td>
+                        <div className={styles.teamBadges}>
+                          {isMultiTeam ? (
+                            <span className={`${styles.teamBadge} ${styles.teamBadgeAll}`}>All</span>
+                          ) : (
+                            <>
+                              {(teamMap.get(devId) || []).map((name) => (
+                                <span key={name} className={styles.teamBadge}>{name}</span>
+                              ))}
+                              {!(teamMap.get(devId) || []).length && '-'}
+                            </>
+                          )}
+                        </div>
+                      </td>
+                      <td>{s.totalCommits}</td>
+                      <td>{s.commitsByType.develop}</td>
+                      <td>{s.commitsByType.meeting}</td>
+                      <td>{s.commitsByType.chore}</td>
+                      <td>{s.avgEvaluation.toFixed(1)}</td>
+                      <td>
+                        <span style={{ color: '#22c55e' }}>+{s.totalLinesAdded}</span>
+                        {' / '}
+                        <span style={{ color: '#ef4444' }}>-{s.totalLinesDeleted}</span>
+                      </td>
+                      <td>{s.totalWorkHours.toFixed(1)}h</td>
+                      <td>{s.totalAiDrivenMinutes}m</td>
+                      <td>{s.avgProductivity.toFixed(0)}%</td>
+                    </tr>
+                    {isMultiTeam && isExpanded && perTeam.map((pt) => (
+                      <tr key={`${devId}-${pt.team.id}`} className={styles.subRow}>
+                        <td></td>
+                        <td>
+                          <div className={styles.teamBadges}>
+                            <span className={styles.teamBadge}>{pt.team.name}</span>
+                          </div>
+                        </td>
+                        <td>{pt.stats.totalCommits}</td>
+                        <td>{pt.stats.commitsByType.develop}</td>
+                        <td>{pt.stats.commitsByType.meeting}</td>
+                        <td>{pt.stats.commitsByType.chore}</td>
+                        <td>{pt.stats.avgEvaluation.toFixed(1)}</td>
+                        <td>
+                          <span style={{ color: '#22c55e' }}>+{pt.stats.totalLinesAdded}</span>
+                          {' / '}
+                          <span style={{ color: '#ef4444' }}>-{pt.stats.totalLinesDeleted}</span>
+                        </td>
+                        <td>{pt.stats.totalWorkHours.toFixed(1)}h</td>
+                        <td>{pt.stats.totalAiDrivenMinutes}m</td>
+                        <td>{pt.stats.avgProductivity.toFixed(0)}%</td>
+                      </tr>
+                    ))}
+                  </Fragment>
+                );
+              })}
             </tbody>
           </table>
         </div>
