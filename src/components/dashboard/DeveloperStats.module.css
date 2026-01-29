@@ -21,6 +21,42 @@
   border: 1px solid #333;
   border-radius: 8px;
   padding: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.statCard {
+  background: #1a1a2e;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.statValue {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #6366f1;
+}
+
+.statLabel {
+  font-size: 0.8rem;
+  color: #888;
+}
+
+.statSub {
+  font-size: 0.75rem;
+  font-family: monospace;
+  color: #aaa;
 }
 
 .chartTitle {
