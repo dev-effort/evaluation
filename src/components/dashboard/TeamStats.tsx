@@ -26,14 +26,14 @@ export function TeamStats({ stats, dateRange, onDateRangeChange }: TeamStatsProp
   const commitData = sortedByCommits.map((s) => ({
     name: s.team.name,
     commits: s.totalCommits,
-    avgScore: s.avgEvaluation,
+    avgScore: s.avgEvaluationDevelop,
     workHours: s.totalWorkHours,
-    aiDrivenHours: parseFloat((s.totalAiDrivenMinutes / 60).toFixed(1)),
+    aiDrivenHours: parseFloat((s.aiDrivenMinutesByType.develop / 60).toFixed(1)),
   }));
 
   const performanceData = sortedByCommits.map((s) => ({
     name: s.team.name,
-    avgScore: parseFloat(s.avgEvaluation.toFixed(2)),
+    avgScore: parseFloat(s.avgEvaluationDevelop.toFixed(2)),
     members: s.developers.length,
   }));
 
@@ -174,10 +174,10 @@ export function TeamStats({ stats, dateRange, onDateRangeChange }: TeamStatsProp
                 <th>Team</th>
                 <th>Members</th>
                 <th>Total Commits</th>
-                <th>Total Score</th>
-                <th>Avg Score</th>
-                <th>Total Work Hours</th>
-                <th>Total AI Driven</th>
+                <th>Avg Score (Dev)</th>
+                <th>Work Hours</th>
+                <th>AI Minutes (Dev)</th>
+                <th>Productivity</th>
               </tr>
             </thead>
             <tbody>
@@ -190,10 +190,12 @@ export function TeamStats({ stats, dateRange, onDateRangeChange }: TeamStatsProp
                     </td>
                     <td>{s.developers.length}</td>
                     <td>{s.totalCommits}</td>
-                    <td>{(s.avgEvaluation * s.totalCommits).toFixed(0)}</td>
-                    <td>{s.avgEvaluation.toFixed(1)}</td>
-                    <td>{s.totalWorkHours.toFixed(1)}h</td>
-                    <td>{(s.totalAiDrivenMinutes / 60).toFixed(1)}h</td>
+                    <td>{s.avgEvaluationDevelop.toFixed(1)}</td>
+                    <td>{s.totalWorkHours.toFixed(1)}h ({s.workHoursByType.develop.toFixed(1)}h)</td>
+                    <td>{s.aiDrivenMinutesByType.develop}m</td>
+                    <td>{s.workHoursByType.develop > 0 && s.aiDrivenMinutesByType.develop > 0
+                      ? ((s.workHoursByType.develop * 60 / s.aiDrivenMinutesByType.develop) * 100).toFixed(0)
+                      : 0}%</td>
                   </tr>
               ))}
             </tbody>

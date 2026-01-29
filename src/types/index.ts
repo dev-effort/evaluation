@@ -109,8 +109,19 @@ export interface TeamStats {
   developers: DeveloperStats[];
   totalCommits: number;
   avgEvaluation: number;
+  avgEvaluationDevelop: number;
   totalWorkHours: number;
   totalAiDrivenMinutes: number;
+  workHoursByType: {
+    develop: number;
+    meeting: number;
+    chore: number;
+  };
+  aiDrivenMinutesByType: {
+    develop: number;
+    meeting: number;
+    chore: number;
+  };
 }
 
 export interface DashboardSummary {

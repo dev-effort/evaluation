@@ -214,16 +214,37 @@ export function useCommits(): UseCommitsReturn {
       const avgEvaluation = totalCommits > 0
         ? teamCommits.reduce((sum, c) => sum + (c.evaluation_total || 0), 0) / totalCommits
         : 0;
+
+      const developCommits = teamCommits.filter((c) => c.type === 'develop' || c.type === null);
+      const avgEvaluationDevelop = developCommits.length > 0
+        ? developCommits.reduce((sum, c) => sum + (c.evaluation_total || 0), 0) / developCommits.length
+        : 0;
+
       const totalWorkHours = teamCommits.reduce((sum, c) => sum + (c.work_hours || 0), 0);
       const totalAiDrivenMinutes = teamCommits.reduce((sum, c) => sum + (c.ai_driven_minutes || 0), 0);
+
+      const workHoursByType = {
+        develop: developCommits.reduce((sum, c) => sum + (c.work_hours || 0), 0),
+        meeting: teamCommits.filter((c) => c.type === 'meeting').reduce((sum, c) => sum + (c.work_hours || 0), 0),
+        chore: teamCommits.filter((c) => c.type === 'chore').reduce((sum, c) => sum + (c.work_hours || 0), 0),
+      };
+
+      const aiDrivenMinutesByType = {
+        develop: developCommits.reduce((sum, c) => sum + (c.ai_driven_minutes || 0), 0),
+        meeting: teamCommits.filter((c) => c.type === 'meeting').reduce((sum, c) => sum + (c.ai_driven_minutes || 0), 0),
+        chore: teamCommits.filter((c) => c.type === 'chore').reduce((sum, c) => sum + (c.ai_driven_minutes || 0), 0),
+      };
 
       return {
         team,
         developers: teamDevs,
         totalCommits,
         avgEvaluation,
+        avgEvaluationDevelop,
         totalWorkHours,
         totalAiDrivenMinutes,
+        workHoursByType,
+        aiDrivenMinutesByType,
       };
     });
   }, [teams, commits, developers]);
