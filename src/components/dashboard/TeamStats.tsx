@@ -7,8 +7,8 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  LineChart,
-  Line,
+  Legend,
+  ReferenceLine,
 } from 'recharts';
 import type { TeamStats as TeamStatsType } from '@/types';
 import { DateFilter } from './DateFilter';
@@ -28,6 +28,7 @@ export function TeamStats({ stats, dateRange, onDateRangeChange }: TeamStatsProp
     commits: s.totalCommits,
     avgScore: s.avgEvaluation,
     workHours: s.totalWorkHours,
+    aiDrivenHours: parseFloat((s.totalAiDrivenMinutes / 60).toFixed(1)),
   }));
 
   const performanceData = sortedByCommits.map((s) => ({
@@ -35,6 +36,20 @@ export function TeamStats({ stats, dateRange, onDateRangeChange }: TeamStatsProp
     avgScore: parseFloat(s.avgEvaluation.toFixed(2)),
     members: s.developers.length,
   }));
+
+  const avgCommits = commitData.length > 0
+    ? parseFloat((commitData.reduce((sum, d) => sum + d.commits, 0) / commitData.length).toFixed(1))
+    : 0;
+  const avgWorkHours = commitData.length > 0
+    ? parseFloat((commitData.reduce((sum, d) => sum + d.workHours, 0) / commitData.length).toFixed(1))
+    : 0;
+  const avgAiDrivenHours = commitData.length > 0
+    ? parseFloat((commitData.reduce((sum, d) => sum + d.aiDrivenHours, 0) / commitData.length).toFixed(1))
+    : 0;
+
+  const overallAvgScore = performanceData.length > 0
+    ? parseFloat((performanceData.reduce((sum, d) => sum + d.avgScore, 0) / performanceData.length).toFixed(2))
+    : 0;
 
   return (
     <div className={styles.container}>
@@ -48,7 +63,7 @@ export function TeamStats({ stats, dateRange, onDateRangeChange }: TeamStatsProp
 
       <div className={styles.chartsGrid}>
         <div className={styles.chartCard}>
-          <h3 className={styles.chartTitle}>Commits & Work Hours by Team</h3>
+          <h3 className={styles.chartTitle}>Commits & Work Hours & AI Driven by Team</h3>
           <div className={styles.chartContainer}>
             <ResponsiveContainer width="100%" height={350}>
               <BarChart data={commitData}>
@@ -64,6 +79,31 @@ export function TeamStats({ stats, dateRange, onDateRangeChange }: TeamStatsProp
                     color: '#fff',
                   }}
                 />
+                <Legend />
+                <ReferenceLine
+                  yAxisId="left"
+                  y={avgCommits}
+                  stroke="#6366f1"
+                  strokeDasharray="5 5"
+                  strokeWidth={2}
+                  label={{ value: `${avgCommits}`, fill: '#6366f1', position: 'left', fontSize: 12, fontWeight: 600 }}
+                />
+                <ReferenceLine
+                  yAxisId="right"
+                  y={avgWorkHours}
+                  stroke="#22c55e"
+                  strokeDasharray="5 5"
+                  strokeWidth={2}
+                  label={{ value: `${avgWorkHours}h`, fill: '#22c55e', position: 'right', fontSize: 12, fontWeight: 600 }}
+                />
+                <ReferenceLine
+                  yAxisId="right"
+                  y={avgAiDrivenHours}
+                  stroke="#f59e0b"
+                  strokeDasharray="5 5"
+                  strokeWidth={2}
+                  label={{ value: `${avgAiDrivenHours}h`, fill: '#f59e0b', position: 'right', fontSize: 12, fontWeight: 600 }}
+                />
                 <Bar
                   yAxisId="left"
                   dataKey="commits"
@@ -78,6 +118,13 @@ export function TeamStats({ stats, dateRange, onDateRangeChange }: TeamStatsProp
                   radius={[4, 4, 0, 0]}
                   name="Work Hours"
                 />
+                <Bar
+                  yAxisId="right"
+                  dataKey="aiDrivenHours"
+                  fill="#f59e0b"
+                  radius={[4, 4, 0, 0]}
+                  name="AI Driven Hours"
+                />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -87,7 +134,7 @@ export function TeamStats({ stats, dateRange, onDateRangeChange }: TeamStatsProp
           <h3 className={styles.chartTitle}>Average Evaluation Score by Team</h3>
           <div className={styles.chartContainer}>
             <ResponsiveContainer width="100%" height={350}>
-              <LineChart data={performanceData}>
+              <BarChart data={performanceData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#333" />
                 <XAxis dataKey="name" stroke="#888" />
                 <YAxis stroke="#888" domain={[0, 10]} />
@@ -99,15 +146,20 @@ export function TeamStats({ stats, dateRange, onDateRangeChange }: TeamStatsProp
                     color: '#fff',
                   }}
                 />
-                <Line
-                  type="monotone"
-                  dataKey="avgScore"
-                  stroke="#f59e0b"
+                <ReferenceLine
+                  y={overallAvgScore}
+                  stroke="#ef4444"
+                  strokeDasharray="5 5"
                   strokeWidth={2}
-                  dot={{ fill: '#f59e0b', strokeWidth: 2 }}
+                  label={{ value: `${overallAvgScore}`, fill: '#ef4444', position: 'left', fontSize: 12, fontWeight: 600 }}
+                />
+                <Bar
+                  dataKey="avgScore"
+                  fill="#f59e0b"
+                  radius={[4, 4, 0, 0]}
                   name="Avg Score"
                 />
-              </LineChart>
+              </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
