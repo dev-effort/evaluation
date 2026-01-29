@@ -113,14 +113,6 @@ export function TeamDetail({
     { develop: 0, meeting: 0, chore: 0 }
   );
 
-  // Calculate team average productivity (weighted by commits)
-  const totalDevelopCommits = teamTypeStats.develop;
-  const teamAvgProductivity = totalDevelopCommits > 0
-    ? team.developers.reduce((sum, d) => {
-        return sum + d.avgProductivity * d.commitsByType.develop;
-      }, 0) / totalDevelopCommits
-    : 0;
-
   const TYPE_COLORS = {
     develop: '#6366f1',
     meeting: '#22c55e',
@@ -146,8 +138,9 @@ export function TeamDetail({
 
   // Time comparison data
   const timeComparisonData = [
-    { name: 'AI Time (Develop)', value: parseFloat((totalAiMinutes / 60).toFixed(1)) },
-    { name: 'Work Hours', value: parseFloat(team.totalWorkHours.toFixed(1)) },
+    { name: 'Develop (AI Time)', value: parseFloat((team.aiDrivenMinutesByType.develop / 60).toFixed(1)) },
+    { name: 'Meeting (Work Hours)', value: parseFloat(teamWorkHoursByType.meeting.toFixed(1)) },
+    { name: 'Chore (Work Hours)', value: parseFloat(teamWorkHoursByType.chore.toFixed(1)) },
   ].filter((d) => d.value > 0);
 
   const avgBreakdown = team.developers.reduce(
@@ -189,20 +182,24 @@ export function TeamDetail({
           <span className={styles.statLabel}>Total Commits</span>
         </div>
         <div className={styles.statCard}>
-          <span className={styles.statValue}>{team.avgEvaluation.toFixed(1)}</span>
-          <span className={styles.statLabel}>Avg Score</span>
-        </div>
-        <div className={styles.statCard}>
           <span className={styles.statValue}>{totalScore.toFixed(0)}</span>
           <span className={styles.statLabel}>Total Score</span>
         </div>
         <div className={styles.statCard}>
-          <span className={styles.statValue}>{team.totalWorkHours.toFixed(1)}h</span>
-          <span className={styles.statLabel}>Total Work Hours</span>
+          <span className={styles.statValue}>{team.avgEvaluationDevelop.toFixed(1)}</span>
+          <span className={styles.statLabel}>Avg Score</span>
+        </div>
+        <div className={styles.statCard}>
+          <span className={styles.statValue}>{team.totalWorkHours.toFixed(1)}h ({teamWorkHoursByType.develop.toFixed(1)}h)</span>
+          <span className={styles.statLabel}>Total Work Hours (Dev)</span>
         </div>
         <div className={styles.statCard}>
           <span className={styles.statValue}>{(totalAiMinutes / 60).toFixed(1)}h</span>
           <span className={styles.statLabel}>AI Driven Time</span>
+        </div>
+        <div className={styles.statCard}>
+          <span className={styles.statValue}>{teamWorkHoursByType.develop > 0 && team.aiDrivenMinutesByType.develop > 0 ? ((teamWorkHoursByType.develop * 60 / team.aiDrivenMinutesByType.develop) * 100).toFixed(0) : 0}%</span>
+          <span className={styles.statLabel}>Productivity</span>
         </div>
         <div className={styles.statCard}>
           <span className={styles.statValue}>{totalLinesAdded + totalLinesDeleted}</span>
@@ -231,7 +228,7 @@ export function TeamDetail({
               ))}
             </div>
             <div className={styles.typeStatItem}>
-              <span className={styles.typeStatValue}>{team.avgEvaluation.toFixed(1)}</span>
+              <span className={styles.typeStatValue}>{team.avgEvaluationDevelop.toFixed(1)}</span>
               <span className={styles.typeStatLabel}>Avg Score</span>
             </div>
             <div className={styles.typeStatItem}>
@@ -239,11 +236,11 @@ export function TeamDetail({
               <span className={styles.typeStatLabel}>Work Hours</span>
             </div>
             <div className={styles.typeStatItem}>
-              <span className={styles.typeStatValue}>{(totalAiMinutes / 60).toFixed(1)}h</span>
+              <span className={styles.typeStatValue}>{team.aiDrivenMinutesByType.develop}m</span>
               <span className={styles.typeStatLabel}>AI Time</span>
             </div>
             <div className={styles.typeStatItem}>
-              <span className={styles.typeStatValue}>{teamAvgProductivity.toFixed(0)}%</span>
+              <span className={styles.typeStatValue}>{teamWorkHoursByType.develop > 0 && team.aiDrivenMinutesByType.develop > 0 ? ((teamWorkHoursByType.develop * 60 / team.aiDrivenMinutesByType.develop) * 100).toFixed(0) : 0}%</span>
               <span className={styles.typeStatLabel}>Productivity</span>
             </div>
           </div>
@@ -296,9 +293,24 @@ export function TeamDetail({
                   labelStyle={{ color: '#fff' }}
                 />
                 <Legend />
-                <Bar dataKey="develop" name="Develop" stackId="commits" fill={TYPE_COLORS.develop} />
-                <Bar dataKey="meeting" name="Meeting" stackId="commits" fill={TYPE_COLORS.meeting} />
-                <Bar dataKey="chore" name="Chore" stackId="commits" fill={TYPE_COLORS.chore} radius={[0, 4, 4, 0]} />
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                <Bar dataKey="develop" name="Develop" stackId="commits" fill={TYPE_COLORS.develop} label={((props: any) => {
+                  const v = memberCommitData[props.index]?.develop;
+                  if (!v) return null;
+                  return <text x={props.x + props.width / 2} y={props.y + props.height / 2} fill="#fff" fontSize={11} textAnchor="middle" dominantBaseline="middle">{`Dev(${v})`}</text>;
+                }) as any} />
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                <Bar dataKey="meeting" name="Meeting" stackId="commits" fill={TYPE_COLORS.meeting} label={((props: any) => {
+                  const v = memberCommitData[props.index]?.meeting;
+                  if (!v) return null;
+                  return <text x={props.x + props.width / 2} y={props.y + props.height / 2} fill="#fff" fontSize={11} textAnchor="middle" dominantBaseline="middle">{`Meet(${v})`}</text>;
+                }) as any} />
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                <Bar dataKey="chore" name="Chore" stackId="commits" fill={TYPE_COLORS.chore} radius={[0, 4, 4, 0]} label={((props: any) => {
+                  const v = memberCommitData[props.index]?.chore;
+                  if (!v) return null;
+                  return <text x={props.x + props.width / 2} y={props.y + props.height / 2} fill="#fff" fontSize={11} textAnchor="middle" dominantBaseline="middle">{`Chore(${v})`}</text>;
+                }) as any} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -409,11 +421,12 @@ export function TeamDetail({
               <tr>
                 <th>Name</th>
                 <th>Commits</th>
-                <th>Avg Score</th>
+                <th>Total Score</th>
+                <th>Avg Score (Dev)</th>
                 <th>Lines</th>
-                <th>Work Hours</th>
-                <th>AI Minutes</th>
-                <th>Productivity</th>
+                <th>Work Hours (Dev)</th>
+                <th>AI Minutes (Dev)</th>
+                <th>Productivity (Dev)</th>
               </tr>
             </thead>
             <tbody>
@@ -427,15 +440,16 @@ export function TeamDetail({
                       </Link>
                     </td>
                     <td>{dev.totalCommits}</td>
-                    <td>{dev.avgEvaluation.toFixed(1)}</td>
+                    <td>{(dev.avgEvaluationDevelop * dev.commitsByType.develop).toFixed(0)}</td>
+                    <td>{dev.avgEvaluationDevelop.toFixed(1)}</td>
                     <td>
                       <span style={{ color: '#22c55e' }}>+{dev.totalLinesAdded}</span>
                       {' / '}
                       <span style={{ color: '#ef4444' }}>-{dev.totalLinesDeleted}</span>
                     </td>
-                    <td>{dev.totalWorkHours.toFixed(1)}h</td>
-                    <td>{dev.totalAiDrivenMinutes}m</td>
-                    <td>{dev.avgProductivity.toFixed(0)}%</td>
+                    <td>{dev.totalWorkHours.toFixed(1)}h ({dev.workHoursByType.develop.toFixed(1)}h)</td>
+                    <td>{dev.aiDrivenMinutesByType.develop}m</td>
+                    <td>{dev.workHoursByType.develop > 0 && dev.aiDrivenMinutesByType.develop > 0 ? ((dev.workHoursByType.develop * 60 / dev.aiDrivenMinutesByType.develop) * 100).toFixed(0) : 0}%</td>
                   </tr>
                 ))}
             </tbody>
