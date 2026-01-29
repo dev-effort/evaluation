@@ -68,6 +68,11 @@
   color: #888;
 }
 
+.statSub {
+  font-size: 0.75rem;
+  font-family: monospace;
+}
+
 .typeStatsContainer {
   display: grid;
   grid-template-columns: 3fr 1fr 1fr;
@@ -292,6 +297,15 @@
 .evalDetail {
   color: #666;
   font-size: 0.75rem;
+}
+
+.linesBadge {
+  background: #33333380;
+  color: #ccc;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-family: monospace;
 }
 
 .timeBadge {

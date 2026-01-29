@@ -114,6 +114,14 @@ export function useCommits(): UseCommitsReturn {
         (sum, c) => sum + (c.ai_driven_minutes || 0),
         0
       );
+      const totalLinesAdded = devCommits.reduce(
+        (sum, c) => sum + (c.lines_added || 0),
+        0
+      );
+      const totalLinesDeleted = devCommits.reduce(
+        (sum, c) => sum + (c.lines_deleted || 0),
+        0
+      );
       const avgProductivity = totalCommits > 0
         ? devCommits.reduce((sum, c) => sum + (c.productivity || 0), 0) / totalCommits
         : 0;
@@ -139,15 +147,30 @@ export function useCommits(): UseCommitsReturn {
         chore: devCommits.filter((c) => c.type === 'chore').length,
       };
 
+      const workHoursByType = {
+        develop: devCommits
+          .filter((c) => c.type === 'develop' || c.type === null)
+          .reduce((sum, c) => sum + (c.work_hours || 0), 0),
+        meeting: devCommits
+          .filter((c) => c.type === 'meeting')
+          .reduce((sum, c) => sum + (c.work_hours || 0), 0),
+        chore: devCommits
+          .filter((c) => c.type === 'chore')
+          .reduce((sum, c) => sum + (c.work_hours || 0), 0),
+      };
+
       return {
         developer,
         totalCommits,
         avgEvaluation,
         totalWorkHours,
         totalAiDrivenMinutes,
+        totalLinesAdded,
+        totalLinesDeleted,
         avgProductivity,
         evaluationBreakdown,
         commitsByType,
+        workHoursByType,
       };
     });
   }, [commits, developers]);

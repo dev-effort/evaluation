@@ -32,6 +32,10 @@ CREATE TABLE commits (
   evaluation_others INTEGER,
   comment TEXT,
 
+  -- Code stats
+  lines_added INTEGER DEFAULT 0,    -- Number of lines added
+  lines_deleted INTEGER DEFAULT 0,  -- Number of lines deleted
+
   -- Time data
   work_hours DECIMAL,           -- H: 6h -> 6
   ai_driven_minutes INTEGER,    -- ai driven: 30m -> 30

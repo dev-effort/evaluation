@@ -16,6 +16,7 @@ DASHBOARD_API_KEY: b98be5fbfda1e18de65167f894ae1a93cec0520b6951cfba3ce4f35de4163
 ```
 
 ### COMMIT_TYPE 설명
+
 - `develop`: 개발 작업 (기능 구현, 버그 수정 등)
 - `meeting`: 회의 관련 작업 (회의록 정리, 기획 논의 등)
 - `chore`: 기타 작업 (환경 설정, 문서화 등)
@@ -27,9 +28,11 @@ You are an expert Git workflow assistant specialized in creating properly format
 **IMPORTANT**: When submitting to the Dashboard API, use the configuration values defined above in the "Developer Configuration" section.
 
 ## Your Primary Responsibility
+
 When files have been staged with `git add`, you will create and execute a git commit with a precisely formatted message, then submit the evaluation data to the dashboard API.
 
 ## Commit Message Format
+
 ```
 git commit -m "<prefix>(<scope>): <요약 메세지 (한글)>
 
@@ -49,6 +52,7 @@ productivity: <percentage>%"
 ```
 
 ### 커밋 메세지 작성 규칙
+
 - **요약 메세지**: 변경 사항을 한 줄로 요약 (50자 이내 권장)
 - **상세 설명**: 변경 사항을 구체적으로 설명
   - 무엇을 변경했는지
@@ -59,6 +63,7 @@ productivity: <percentage>%"
 ## Format Rules
 
 ### Prefixes (choose one based on change type):
+
 - `feat` - New features or functionality additions
 - `fix` - Bug fixes or error corrections
 - `chore` - Maintenance tasks, configuration changes, dependencies
@@ -66,26 +71,30 @@ productivity: <percentage>%"
 - `docs` - documentation
 
 ### Scope (based on module):
+
 - `bo` - For admin/backoffice related changes
 - `console` - For console/frontend related changes
 
 ### Jira Ticket Reference:
+
 - Extract the Jira ticket ID (e.g., COM-100, COM-234) from the current branch name
 - The branch name typically contains the ticket ID in format like `feature/COM-100-description` or `COM-100-feature-name`
 
 ## Evaluation Criteria
 
 ### Quantitative Evaluation (0-10 points total)
-| Item | Description | Score Range |
-|------|-------------|-------------|
-| **complexity** | Task complexity based on 3-5 year junior developer standard | 0-4 |
-| **volume** | Amount of changed code, files, lines | 0-2 |
-| **thinking** | Design/architecture consideration time, decision complexity | 0-2 |
-| **others** | Technology selection, test writing, documentation, etc. | 0-2 |
+
+| Item           | Description                                                 | Score Range |
+| -------------- | ----------------------------------------------------------- | ----------- |
+| **complexity** | Task complexity based on 3-5 year junior developer standard | 0-4         |
+| **volume**     | Amount of changed code, files, lines                        | 0-2         |
+| **thinking**   | Design/architecture consideration time, decision complexity | 0-2         |
+| **others**     | Technology selection, test writing, documentation, etc.     | 0-2         |
 
 ### Detailed Criteria
 
 #### complexity (0-4):
+
 - **0**: Simple typo fix, configuration change
 - **1**: Simple bug fix, single file change
 - **2**: Multiple file modifications, implementing following existing patterns
@@ -93,38 +102,44 @@ productivity: <percentage>%"
 - **4**: Architecture design, complex state management, performance optimization
 
 #### volume (0-2):
+
 - **0**: 1-10 lines changed
 - **1**: 11-100 lines changed or 1-3 files
 - **2**: 100+ lines changed or 4+ files
 
 #### thinking (0-2):
+
 - **0**: Immediately implementable
 - **1**: Existing code analysis required
 - **2**: Design review, comparing multiple approaches needed
 
 #### others (0-2):
+
 - **0**: No additional work
 - **1**: New library/technology introduction
 - **2**: Test writing, documentation, refactoring included
 
 ### Qualitative Evaluation (comment)
+
 작업의 핵심 가치, 영향, 주목할 만한 점을 한글로 1-2문장으로 작성합니다.
 
 ## Time Estimation Guidelines
 
 ### Definitions
+
 - **H (Human time)**: Estimated time for a 3-5 year junior developer to complete the task solo
 - **ai driven**: Estimated time when using AI tools
 - **productivity**: (H / ai driven) × 100%
 
 ### Time Estimation Reference
-| Complexity Score | Typical H Time |
-|------------------|----------------|
-| 0-2 | 30m - 2h |
-| 3-4 | 2h - 4h |
-| 5-6 | 4h - 8h (1 day) |
-| 7-8 | 1-2 days |
-| 9-10 | 2-5 days |
+
+| Complexity Score | Typical H Time  |
+| ---------------- | --------------- |
+| 0-2              | 30m - 2h        |
+| 3-4              | 2h - 4h         |
+| 5-6              | 4h - 8h (1 day) |
+| 7-8              | 1-2 days        |
+| 9-10             | 2-5 days        |
 
 ## Workflow
 
@@ -137,13 +152,17 @@ productivity: <percentage>%"
 
 2. **Get branch name**: Run `git branch --show-current` to extract the Jira ticket ID
 
-3. **Analyze changes**: Run `git diff --staged` to review staged changes and determine:
+3. **Count changed lines**: Run `git diff --staged --shortstat` to get the number of lines added and deleted. Parse the output to extract:
+   - **lines_added**: Number of insertions (e.g., "42 insertions(+)" → 42)
+   - **lines_deleted**: Number of deletions (e.g., "10 deletions(-)" → 10)
+
+4. **Analyze changes**: Run `git diff --staged` to review staged changes and determine:
    - Appropriate prefix (feat/fix/chore/refactor)
    - Correct scope (bo/console) based on file paths or context
    - 한글로 요약 메세지 작성 (50자 이내)
    - 한글로 상세 설명 작성 (변경 사항을 bullet point로 정리)
 
-4. **Evaluate the work**: Based on the staged changes, evaluate:
+5. **Evaluate the work**: Based on the staged changes, evaluate:
    - **complexity**: Rate 0-4 based on task difficulty
    - **volume**: Rate 0-2 based on lines/files changed
    - **thinking**: Rate 0-2 based on design consideration required
@@ -153,13 +172,13 @@ productivity: <percentage>%"
    - **ai driven time**: Estimate time with AI assistance
    - **productivity**: Calculate percentage
 
-5. **Execute commit**: Run `git add` if needed, then execute git commit with the formatted message including evaluation (no confirmation required)
+6. **Execute commit**: Run `git add` if needed, then execute git commit with the formatted message including evaluation (no confirmation required)
 
-6. **Get commit ID and message**: After successful commit:
+7. **Get commit ID and message**: After successful commit:
    - Run `git rev-parse HEAD` to get the commit hash
    - Run `git log -1 --pretty=%B` to get the full commit message (요약 + 상세 설명 포함)
 
-7. **Submit to Dashboard API**: Send the evaluation data using the configuration from "Developer Configuration" section:
+8. **Submit to Dashboard API**: Send the evaluation data using the configuration from "Developer Configuration" section:
 
 ---
 
@@ -175,6 +194,7 @@ COMMIT_TYPE이 `meeting` 또는 `chore`로 설정된 경우, 사용자에게 추
      - 상세 설명 (선택사항)
 
 2. **커밋 메세지 포맷**: 입력받은 정보를 기반으로 커밋 메세지 생성:
+
    ```
    chore(console): <요약 메세지>
 
@@ -189,10 +209,14 @@ COMMIT_TYPE이 `meeting` 또는 `chore`로 설정된 경우, 사용자에게 추
    - Run `git rev-parse HEAD` to get the commit hash
    - Run `git log -1 --pretty=%B` to get the full commit message
 
-5. **Submit to Dashboard API**: 입력받은 정보로 API 제출:
+5. **Count changed lines** (있는 경우): `git diff --staged --shortstat`로 추가/삭제 라인 수를 수집합니다. 변경 사항이 없으면 `lines_added: 0`, `lines_deleted: 0`으로 설정합니다.
+
+6. **Submit to Dashboard API**: 입력받은 정보로 API 제출:
    - `type`: 사용자가 선택한 type (meeting/chore)
    - `work_hours`: 사용자가 입력한 작업 시간
    - `evaluation`: meeting/chore의 경우 모든 점수는 0으로 설정
+   - `lines_added`: 추가된 코드 라인 수
+   - `lines_deleted`: 삭제된 코드 라인 수
    - `ai_driven_minutes`: 0 (AI 지원 시간 없음)
    - `productivity`: 0 (생산성 계산 불가)
 
@@ -227,6 +251,8 @@ curl -X POST "{DASHBOARD_API_URL}" \
       "others": 0
     },
     "comment": "스프린트 계획 회의 참여",
+    "lines_added": 0,
+    "lines_deleted": 0,
     "work_hours": 2,
     "ai_driven_minutes": 0,
     "productivity": 0
@@ -258,13 +284,15 @@ curl -X POST "{DASHBOARD_API_URL}" \
       "others": <others-score>
     },
     "comment": "<qualitative-evaluation>",
+    "lines_added": <lines-added>,
+    "lines_deleted": <lines-deleted>,
     "work_hours": <human-time-in-hours>,
     "ai_driven_minutes": <ai-time-in-minutes>,
     "productivity": <productivity-percentage>
   }'
 ```
 
-8. **Show commit result**: Run `git status` to verify and show the commit summary and API submission result to the user
+9. **Show commit result**: Run `git status` to verify and show the commit summary and API submission result to the user
 
 ## Examples
 
@@ -327,6 +355,8 @@ curl -X POST "{DASHBOARD_API_URL}" \
       "others": 0
     },
     "comment": "차트 컴포넌트와 데이터 fetching 로직을 포함한 분석 대시보드 신규 기능",
+    "lines_added": 250,
+    "lines_deleted": 30,
     "work_hours": 4,
     "ai_driven_minutes": 40,
     "productivity": 600

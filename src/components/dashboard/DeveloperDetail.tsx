@@ -142,21 +142,67 @@ export function DeveloperDetail({
     );
   }
 
+  // Calculate evaluation breakdown only from develop type commits
+  const developCommitsOnly = developerCommits.filter(
+    (c) => c.type === 'develop' || c.type === null
+  );
+  const developCommitCount = developCommitsOnly.length;
+  const developEvaluationBreakdown = {
+    complexity: developCommitCount > 0
+      ? developCommitsOnly.reduce((sum, c) => sum + (c.evaluation_complexity || 0), 0) / developCommitCount
+      : 0,
+    volume: developCommitCount > 0
+      ? developCommitsOnly.reduce((sum, c) => sum + (c.evaluation_volume || 0), 0) / developCommitCount
+      : 0,
+    thinking: developCommitCount > 0
+      ? developCommitsOnly.reduce((sum, c) => sum + (c.evaluation_thinking || 0), 0) / developCommitCount
+      : 0,
+    others: developCommitCount > 0
+      ? developCommitsOnly.reduce((sum, c) => sum + (c.evaluation_others || 0), 0) / developCommitCount
+      : 0,
+  };
+
   const radarData = [
-    { subject: 'Complexity', value: developer.evaluationBreakdown.complexity },
-    { subject: 'Volume', value: developer.evaluationBreakdown.volume },
-    { subject: 'Thinking', value: developer.evaluationBreakdown.thinking },
-    { subject: 'Others', value: developer.evaluationBreakdown.others },
+    { subject: 'Complexity', value: developEvaluationBreakdown.complexity },
+    { subject: 'Volume', value: developEvaluationBreakdown.volume },
+    { subject: 'Thinking', value: developEvaluationBreakdown.thinking },
+    { subject: 'Others', value: developEvaluationBreakdown.others },
   ];
 
   const commitsByDate = developerCommits.reduce((acc, commit) => {
     const date = new Date(commit.created_at).toLocaleDateString('ko-KR');
-    acc[date] = (acc[date] || 0) + 1;
+    if (!acc[date]) {
+      acc[date] = { develop: 0, meeting: 0, chore: 0 };
+    }
+    const type = commit.type || 'develop';
+    if (type === 'develop') acc[date].develop += 1;
+    else if (type === 'meeting') acc[date].meeting += 1;
+    else if (type === 'chore') acc[date].chore += 1;
     return acc;
-  }, {} as Record<string, number>);
+  }, {} as Record<string, { develop: number; meeting: number; chore: number }>);
 
   const commitChartData = Object.entries(commitsByDate)
-    .map(([date, count]) => ({ date, commits: count }))
+    .map(([date, data]) => ({ date, ...data }))
+    .reverse()
+    .slice(-14);
+
+  // Daily work hours and AI time data
+  const timeByDate = developerCommits.reduce((acc, commit) => {
+    const date = new Date(commit.created_at).toLocaleDateString('ko-KR');
+    if (!acc[date]) {
+      acc[date] = { workHours: 0, aiTime: 0 };
+    }
+    acc[date].workHours += commit.work_hours || 0;
+    acc[date].aiTime += (commit.ai_driven_minutes || 0) / 60; // Convert to hours
+    return acc;
+  }, {} as Record<string, { workHours: number; aiTime: number }>);
+
+  const timeChartData = Object.entries(timeByDate)
+    .map(([date, data]) => ({
+      date,
+      workHours: parseFloat(data.workHours.toFixed(1)),
+      aiTime: parseFloat(data.aiTime.toFixed(1)),
+    }))
     .reverse()
     .slice(-14);
 
@@ -228,6 +274,15 @@ export function DeveloperDetail({
           <span className={styles.statValue}>{developer.avgProductivity.toFixed(0)}%</span>
           <span className={styles.statLabel}>Avg Productivity</span>
         </div>
+        <div className={styles.statCard}>
+          <span className={styles.statValue}>{developer.totalLinesAdded + developer.totalLinesDeleted}</span>
+          <span className={styles.statLabel}>Total Lines</span>
+          <span className={styles.statSub}>
+            <span style={{ color: '#22c55e' }}>+{developer.totalLinesAdded}</span>
+            {' / '}
+            <span style={{ color: '#ef4444' }}>-{developer.totalLinesDeleted}</span>
+          </span>
+        </div>
       </div>
 
       <div className={styles.typeStatsContainer}>
@@ -294,12 +349,46 @@ export function DeveloperDetail({
                     borderRadius: '4px',
                     color: '#fff',
                   }}
+                  itemStyle={{ color: '#fff' }}
+                  labelStyle={{ color: '#fff' }}
                 />
-                <Bar dataKey="commits" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                <Legend />
+                <Bar dataKey="develop" name="Develop" stackId="commits" fill="#6366f1" />
+                <Bar dataKey="meeting" name="Meeting" stackId="commits" fill="#22c55e" />
+                <Bar dataKey="chore" name="Chore" stackId="commits" fill="#f59e0b" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
+
+        {timeChartData.length > 0 && (
+          <div className={`${styles.chartCard} ${styles.chartCardFullWidth}`}>
+            <h3 className={styles.chartTitle}>Work Hours & AI Time Over Time</h3>
+            <div className={styles.chartContainer}>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={timeChartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                  <XAxis dataKey="date" stroke="#888" fontSize={12} />
+                  <YAxis stroke="#888" unit="h" />
+                  <Tooltip
+                    contentStyle={{
+                      background: '#1a1a2e',
+                      border: '1px solid #333',
+                      borderRadius: '4px',
+                      color: '#fff',
+                    }}
+                    itemStyle={{ color: '#fff' }}
+                    labelStyle={{ color: '#fff' }}
+                    formatter={(value, name) => [`${value}h`, name]}
+                  />
+                  <Legend />
+                  <Bar dataKey="aiTime" name="AI Time" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="workHours" name="Work Hours" fill="#22c55e" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        )}
 
         <div className={styles.chartCard}>
           <h3 className={styles.chartTitle}>Evaluation Breakdown</h3>
@@ -466,6 +555,13 @@ export function DeveloperDetail({
                   <span className={styles.evalDetail}>
                     (C:{commit.evaluation_complexity ?? 0} V:{commit.evaluation_volume ?? 0} T:{commit.evaluation_thinking ?? 0} O:{commit.evaluation_others ?? 0})
                   </span>
+                  {(commit.lines_added || commit.lines_deleted) ? (
+                    <span className={styles.linesBadge}>
+                      <span style={{ color: '#22c55e' }}>+{commit.lines_added || 0}</span>
+                      {' / '}
+                      <span style={{ color: '#ef4444' }}>-{commit.lines_deleted || 0}</span>
+                    </span>
+                  ) : null}
                   {commit.work_hours && (
                     <span className={styles.timeBadge}>H: {commit.work_hours}h</span>
                   )}

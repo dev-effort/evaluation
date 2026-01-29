@@ -35,6 +35,8 @@ export interface Commit {
   evaluation_thinking: number | null;
   evaluation_others: number | null;
   comment: string | null;
+  lines_added: number | null;
+  lines_deleted: number | null;
   work_hours: number | null;
   ai_driven_minutes: number | null;
   productivity: number | null;
@@ -55,6 +57,8 @@ export interface CommitSubmitRequest {
   type?: CommitType;
   evaluation: Evaluation;
   comment?: string;
+  lines_added?: number;
+  lines_deleted?: number;
   work_hours?: number;
   ai_driven_minutes?: number;
   productivity?: number;
@@ -66,6 +70,8 @@ export interface DeveloperStats {
   avgEvaluation: number;
   totalWorkHours: number;
   totalAiDrivenMinutes: number;
+  totalLinesAdded: number;
+  totalLinesDeleted: number;
   avgProductivity: number;
   evaluationBreakdown: {
     complexity: number;
@@ -74,6 +80,11 @@ export interface DeveloperStats {
     others: number;
   };
   commitsByType: {
+    develop: number;
+    meeting: number;
+    chore: number;
+  };
+  workHoursByType: {
     develop: number;
     meeting: number;
     chore: number;

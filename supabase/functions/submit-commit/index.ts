@@ -22,6 +22,8 @@ interface CommitRequest {
     others: number;
   };
   comment?: string;
+  lines_added?: number;
+  lines_deleted?: number;
   work_hours?: number;
   ai_driven_minutes?: number;
   productivity?: number;
@@ -119,6 +121,8 @@ serve(async (req) => {
       evaluation_thinking: data.evaluation.thinking,
       evaluation_others: data.evaluation.others,
       comment: data.comment || null,
+      lines_added: data.lines_added || 0,
+      lines_deleted: data.lines_deleted || 0,
       work_hours: data.work_hours || null,
       ai_driven_minutes: data.ai_driven_minutes || null,
       productivity: data.productivity || null,

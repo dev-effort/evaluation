@@ -68,6 +68,79 @@
   color: #888;
 }
 
+.statSub {
+  font-size: 0.75rem;
+  font-family: monospace;
+}
+
+.typeStatsContainer {
+  display: grid;
+  grid-template-columns: 3fr 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.typeStatsCard {
+  background: #1a1a2e;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 0.75rem;
+}
+
+.typeStatsCardDevelop {
+  grid-column: 1;
+}
+
+.typeStatsTitle {
+  margin: 0 0 0.75rem;
+  font-size: 0.9rem;
+  color: #6366f1;
+  font-weight: 600;
+}
+
+.typeStatsGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.typeStatItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 60px;
+}
+
+.typeStatValue {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.typeStatLabel {
+  font-size: 0.7rem;
+  color: #888;
+}
+
+.prefixCountsContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding: 0 0.5rem;
+  border-left: 1px solid #333;
+  margin-left: 0.25rem;
+}
+
+.prefixBadge {
+  background: #2a2a4a;
+  color: #aaa;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-family: monospace;
+}
+
 .chartsGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
@@ -80,6 +153,10 @@
   border: 1px solid #333;
   border-radius: 8px;
   padding: 1.25rem;
+}
+
+.chartCardFullWidth {
+  grid-column: 1 / -1;
 }
 
 .chartTitle {
@@ -142,6 +219,14 @@
 @media (max-width: 900px) {
   .chartsGrid {
     grid-template-columns: 1fr;
+  }
+
+  .typeStatsContainer {
+    grid-template-columns: 1fr;
+  }
+
+  .typeStatsCardDevelop {
+    grid-column: 1;
   }
 
   .header {
