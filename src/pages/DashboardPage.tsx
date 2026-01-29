@@ -77,6 +77,7 @@ export function DashboardPage() {
               <DeveloperDetail
                 developerStats={developerStats}
                 commits={commits}
+                teams={teams}
                 dateRange={dateRange}
                 onDateRangeChange={(start, end) => setDateRange({ startDate: start, endDate: end })}
               />

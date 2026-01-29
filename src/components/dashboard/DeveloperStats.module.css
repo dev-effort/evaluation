@@ -15,12 +15,22 @@
   margin-bottom: 1.5rem;
 }
 
+.chartsRowThree {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
 .chartCard,
 .tableCard {
   background: #1a1a2e;
   border: 1px solid #333;
   border-radius: 8px;
   padding: 1.25rem;
+}
+
+.tableCard {
   margin-bottom: 1.5rem;
 }
 
@@ -165,6 +175,10 @@
 
 @media (max-width: 900px) {
   .chartsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .chartsRowThree {
     grid-template-columns: 1fr;
   }
 }

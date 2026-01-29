@@ -147,7 +147,14 @@
 
 .chartsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.chartsRowThree {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: 1.5rem;
   margin-bottom: 1.5rem;
 }
@@ -179,6 +186,65 @@
   border: 1px solid #333;
   border-radius: 8px;
   padding: 1.25rem;
+}
+
+.commitsSectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.commitsSectionHeader .chartTitle {
+  margin-bottom: 0;
+}
+
+.commitFilters {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filterGroup {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.filterBtn {
+  background: transparent;
+  color: #888;
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.filterBtn:hover {
+  color: #ccc;
+  border-color: #555;
+}
+
+.filterBtnActive {
+  background: #6366f133;
+  color: #a78bfa;
+  border-color: #6366f1;
+}
+
+.filterDivider {
+  width: 1px;
+  height: 1.2rem;
+  background: #333;
+}
+
+.commitTeamBadge {
+  background: #2a2a4a;
+  color: #a78bfa;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  font-weight: 600;
 }
 
 .commitsList {
@@ -338,6 +404,10 @@
 
 @media (max-width: 900px) {
   .chartsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .chartsRowThree {
     grid-template-columns: 1fr;
   }
 

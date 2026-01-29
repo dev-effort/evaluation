@@ -60,10 +60,39 @@ export function DeveloperStats({ stats, teamStats, teams, developerTeams, dateRa
     chore: s.commitsByType.chore,
   }));
 
+  const workHoursData = sortedByCommits.map((s) => ({
+    name: s.developer.name,
+    develop: parseFloat(s.workHoursByType.develop.toFixed(1)),
+    meeting: parseFloat(s.workHoursByType.meeting.toFixed(1)),
+    chore: parseFloat(s.workHoursByType.chore.toFixed(1)),
+  }));
+
+  const totalWorkHoursByType = [{
+    name: 'All Developers',
+    develop: parseFloat(stats.reduce((sum, s) => sum + s.workHoursByType.develop, 0).toFixed(1)),
+    meeting: parseFloat(stats.reduce((sum, s) => sum + s.workHoursByType.meeting, 0).toFixed(1)),
+    chore: parseFloat(stats.reduce((sum, s) => sum + s.workHoursByType.chore, 0).toFixed(1)),
+  }];
+
   const TYPE_COLORS = {
     develop: '#6366f1',
     meeting: '#22c55e',
     chore: '#f59e0b',
+  };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const renderStackedTooltip = (unit: string) => ({ active, payload, label }: any) => {
+    if (!active || !payload?.length) return null;
+    const total = payload.reduce((sum: number, p: any) => sum + (p.value || 0), 0);
+    return (
+      <div style={{ background: '#1a1a2e', border: '1px solid #333', borderRadius: '4px', padding: '0.5rem 0.75rem', color: '#fff', fontSize: '0.85rem' }}>
+        <p style={{ margin: '0 0 0.25rem', fontWeight: 600 }}>{label}</p>
+        {payload.map((p: any) => (
+          <p key={p.name} style={{ margin: '0.15rem 0', color: p.color }}>{p.name}: {p.value}{unit}</p>
+        ))}
+        <p style={{ margin: '0.25rem 0 0', borderTop: '1px solid #444', paddingTop: '0.25rem', fontWeight: 600, color: '#fff' }}>Total: {parseFloat(total.toFixed(1))}{unit}</p>
+      </div>
+    );
   };
 
   // Summary calculations
@@ -73,14 +102,15 @@ export function DeveloperStats({ stats, teamStats, teams, developerTeams, dateRa
   const totalMeeting = stats.reduce((sum, s) => sum + s.commitsByType.meeting, 0);
   const totalChore = stats.reduce((sum, s) => sum + s.commitsByType.chore, 0);
   const totalWorkHours = stats.reduce((sum, s) => sum + s.totalWorkHours, 0);
-  const totalAiMinutes = stats.reduce((sum, s) => sum + s.totalAiDrivenMinutes, 0);
-  const avgScore = totalCommits > 0
-    ? stats.reduce((sum, s) => sum + s.avgEvaluation * s.totalCommits, 0) / totalCommits
+  const totalDevelopWorkHours = stats.reduce((sum, s) => sum + s.workHoursByType.develop, 0);
+  const totalDevelopAiMinutes = stats.reduce((sum, s) => sum + s.aiDrivenMinutesByType.develop, 0);
+  const avgScore = totalDevelop > 0
+    ? stats.reduce((sum, s) => sum + s.avgEvaluationDevelop * s.commitsByType.develop, 0) / totalDevelop
     : 0;
   const avgWorkHours = totalWorkHours / devCount;
-  const avgAiMinutes = totalAiMinutes / devCount;
-  const avgProductivity = totalCommits > 0
-    ? stats.reduce((sum, s) => sum + s.avgProductivity * s.totalCommits, 0) / totalCommits
+  const avgDevelopAiMinutes = totalDevelopAiMinutes / devCount;
+  const avgProductivity = totalDevelopWorkHours > 0 && totalDevelopAiMinutes > 0
+    ? (totalDevelopWorkHours * 60 / totalDevelopAiMinutes) * 100
     : 0;
   const totalLinesAdded = stats.reduce((sum, s) => sum + s.totalLinesAdded, 0);
   const totalLinesDeleted = stats.reduce((sum, s) => sum + s.totalLinesDeleted, 0);
@@ -120,30 +150,59 @@ export function DeveloperStats({ stats, teamStats, teams, developerTeams, dateRa
         onFilterChange={onDateRangeChange}
       />
 
-      <div className={styles.chartCard}>
-        <h3 className={styles.chartTitle}>Commits by Developer</h3>
-        <div className={styles.chartContainer}>
-          <ResponsiveContainer width="100%" height={Math.max(350, sortedByCommits.length * 40)}>
-            <BarChart data={commitData} layout="vertical">
-              <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-              <XAxis type="number" stroke="#888" />
-              <YAxis dataKey="name" type="category" stroke="#888" width={100} />
-              <Tooltip
-                contentStyle={{
-                  background: '#1a1a2e',
-                  border: '1px solid #333',
-                  borderRadius: '4px',
-                  color: '#fff',
-                }}
-                itemStyle={{ color: '#fff' }}
-                labelStyle={{ color: '#fff' }}
-              />
-              <Legend />
-              <Bar dataKey="develop" name="Develop" stackId="commits" fill={TYPE_COLORS.develop} />
-              <Bar dataKey="meeting" name="Meeting" stackId="commits" fill={TYPE_COLORS.meeting} />
-              <Bar dataKey="chore" name="Chore" stackId="commits" fill={TYPE_COLORS.chore} radius={[0, 4, 4, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+      <div className={styles.chartsRowThree}>
+        <div className={styles.chartCard}>
+          <h3 className={styles.chartTitle}>Commits by Developer</h3>
+          <div className={styles.chartContainer}>
+            <ResponsiveContainer width="100%" height={Math.max(350, sortedByCommits.length * 40)}>
+              <BarChart data={commitData} layout="vertical">
+                <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                <XAxis type="number" stroke="#888" />
+                <YAxis dataKey="name" type="category" stroke="#888" width={100} />
+                <Tooltip content={renderStackedTooltip('')} />
+                <Legend />
+                <Bar dataKey="develop" name="Develop" stackId="commits" fill={TYPE_COLORS.develop} />
+                <Bar dataKey="meeting" name="Meeting" stackId="commits" fill={TYPE_COLORS.meeting} />
+                <Bar dataKey="chore" name="Chore" stackId="commits" fill={TYPE_COLORS.chore} radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className={styles.chartCard}>
+          <h3 className={styles.chartTitle}>Work Hours by Developer</h3>
+          <div className={styles.chartContainer}>
+            <ResponsiveContainer width="100%" height={Math.max(350, sortedByCommits.length * 40)}>
+              <BarChart data={workHoursData} layout="vertical">
+                <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                <XAxis type="number" stroke="#888" unit="h" />
+                <YAxis dataKey="name" type="category" stroke="#888" width={100} />
+                <Tooltip content={renderStackedTooltip('h')} />
+                <Legend />
+                <Bar dataKey="develop" name="Develop" stackId="hours" fill={TYPE_COLORS.develop} />
+                <Bar dataKey="meeting" name="Meeting" stackId="hours" fill={TYPE_COLORS.meeting} />
+                <Bar dataKey="chore" name="Chore" stackId="hours" fill={TYPE_COLORS.chore} radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className={styles.chartCard}>
+          <h3 className={styles.chartTitle}>Total Work Hours by Type</h3>
+          <div className={styles.chartContainer}>
+            <ResponsiveContainer width="100%" height={Math.max(350, sortedByCommits.length * 40)}>
+              <BarChart data={totalWorkHoursByType} layout="vertical">
+                <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                <XAxis type="number" stroke="#888" unit="h" />
+                <YAxis dataKey="name" type="category" stroke="#888" width={100} />
+                <Tooltip content={renderStackedTooltip('h')} />
+                <Legend />
+                <Bar dataKey="develop" name="Develop" stackId="hours" fill={TYPE_COLORS.develop} />
+                <Bar dataKey="meeting" name="Meeting" stackId="hours" fill={TYPE_COLORS.meeting} />
+                <Bar dataKey="chore" name="Chore" stackId="hours" fill={TYPE_COLORS.chore} radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </div>
 
@@ -161,17 +220,17 @@ export function DeveloperStats({ stats, teamStats, teams, developerTeams, dateRa
         </div>
         <div className={styles.statCard}>
           <span className={styles.statValue}>{avgScore.toFixed(1)}</span>
-          <span className={styles.statLabel}>Avg Score</span>
+          <span className={styles.statLabel}>Avg Score (Dev)</span>
         </div>
         <div className={styles.statCard}>
           <span className={styles.statValue}>{totalWorkHours.toFixed(1)}h</span>
           <span className={styles.statLabel}>Total Work Hours</span>
-          <span className={styles.statSub}>avg {avgWorkHours.toFixed(1)}h</span>
+          <span className={styles.statSub}>dev {totalDevelopWorkHours.toFixed(1)}h / avg {avgWorkHours.toFixed(1)}h</span>
         </div>
         <div className={styles.statCard}>
-          <span className={styles.statValue}>{totalAiMinutes}m</span>
-          <span className={styles.statLabel}>Total AI Minutes</span>
-          <span className={styles.statSub}>avg {avgAiMinutes.toFixed(0)}m</span>
+          <span className={styles.statValue}>{totalDevelopAiMinutes}m</span>
+          <span className={styles.statLabel}>AI Minutes (Dev)</span>
+          <span className={styles.statSub}>avg {avgDevelopAiMinutes.toFixed(0)}m</span>
         </div>
         <div className={styles.statCard}>
           <span className={styles.statValue}>{avgProductivity.toFixed(0)}%</span>
@@ -252,15 +311,17 @@ export function DeveloperStats({ stats, teamStats, teams, developerTeams, dateRa
                       <td>{s.commitsByType.develop}</td>
                       <td>{s.commitsByType.meeting}</td>
                       <td>{s.commitsByType.chore}</td>
-                      <td>{s.avgEvaluation.toFixed(1)}</td>
+                      <td>{s.avgEvaluationDevelop.toFixed(1)}</td>
                       <td>
                         <span style={{ color: '#22c55e' }}>+{s.totalLinesAdded}</span>
                         {' / '}
                         <span style={{ color: '#ef4444' }}>-{s.totalLinesDeleted}</span>
                       </td>
-                      <td>{s.totalWorkHours.toFixed(1)}h</td>
-                      <td>{s.totalAiDrivenMinutes}m</td>
-                      <td>{s.avgProductivity.toFixed(0)}%</td>
+                      <td>{s.totalWorkHours.toFixed(1)}h ({s.workHoursByType.develop.toFixed(1)}h)</td>
+                      <td>{s.aiDrivenMinutesByType.develop}m</td>
+                      <td>{s.workHoursByType.develop > 0 && s.aiDrivenMinutesByType.develop > 0
+                        ? ((s.workHoursByType.develop * 60 / s.aiDrivenMinutesByType.develop) * 100).toFixed(0)
+                        : 0}%</td>
                     </tr>
                     {isMultiTeam && isExpanded && perTeam.map((pt) => (
                       <tr key={`${devId}-${pt.team.id}`} className={styles.subRow}>
@@ -274,15 +335,17 @@ export function DeveloperStats({ stats, teamStats, teams, developerTeams, dateRa
                         <td>{pt.stats.commitsByType.develop}</td>
                         <td>{pt.stats.commitsByType.meeting}</td>
                         <td>{pt.stats.commitsByType.chore}</td>
-                        <td>{pt.stats.avgEvaluation.toFixed(1)}</td>
+                        <td>{pt.stats.avgEvaluationDevelop.toFixed(1)}</td>
                         <td>
                           <span style={{ color: '#22c55e' }}>+{pt.stats.totalLinesAdded}</span>
                           {' / '}
                           <span style={{ color: '#ef4444' }}>-{pt.stats.totalLinesDeleted}</span>
                         </td>
-                        <td>{pt.stats.totalWorkHours.toFixed(1)}h</td>
-                        <td>{pt.stats.totalAiDrivenMinutes}m</td>
-                        <td>{pt.stats.avgProductivity.toFixed(0)}%</td>
+                        <td>{pt.stats.totalWorkHours.toFixed(1)}h ({pt.stats.workHoursByType.develop.toFixed(1)}h)</td>
+                        <td>{pt.stats.aiDrivenMinutesByType.develop}m</td>
+                        <td>{pt.stats.workHoursByType.develop > 0 && pt.stats.aiDrivenMinutesByType.develop > 0
+                          ? ((pt.stats.workHoursByType.develop * 60 / pt.stats.aiDrivenMinutesByType.develop) * 100).toFixed(0)
+                          : 0}%</td>
                       </tr>
                     ))}
                   </Fragment>

@@ -96,6 +96,12 @@ export interface DeveloperStats {
     meeting: number;
     chore: number;
   };
+  aiDrivenMinutesByType: {
+    develop: number;
+    meeting: number;
+    chore: number;
+  };
+  avgEvaluationDevelop: number;
 }
 
 export interface TeamStats {

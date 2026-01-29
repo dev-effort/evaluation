@@ -1,4 +1,4 @@
-import { useMemo, ReactNode } from 'react';
+import { useMemo, useState, ReactNode } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   BarChart,
@@ -67,6 +67,7 @@ interface CommitWithDeveloper extends Commit {
 interface DeveloperDetailProps {
   developerStats: DeveloperStats[];
   commits: CommitWithDeveloper[];
+  teams: Team[];
   dateRange: { startDate: string; endDate: string };
   onDateRangeChange: (startDate: string, endDate: string) => void;
 }
@@ -74,10 +75,13 @@ interface DeveloperDetailProps {
 export function DeveloperDetail({
   developerStats,
   commits,
+  teams,
   dateRange,
   onDateRangeChange,
 }: DeveloperDetailProps) {
   const { developerId } = useParams<{ developerId: string }>();
+  const [filterTeam, setFilterTeam] = useState<string>('all');
+  const [filterType, setFilterType] = useState<string>('all');
 
   const developer = useMemo(() => {
     return developerStats.find((ds) => ds.developer.id === developerId);
@@ -130,6 +134,45 @@ export function DeveloperDetail({
       };
     });
   }, [developerCommits]);
+
+  const teamStatsData = useMemo(() => {
+    const teamMap = new Map<string, { commits: number; workHours: number; aiDrivenHours: number }>();
+    developerCommits.forEach((c) => {
+      const tid = c.team_id;
+      if (!tid) return;
+      const prev = teamMap.get(tid) || { commits: 0, workHours: 0, aiDrivenHours: 0 };
+      prev.commits += 1;
+      prev.workHours += c.work_hours || 0;
+      prev.aiDrivenHours += (c.ai_driven_minutes || 0) / 60;
+      teamMap.set(tid, prev);
+    });
+    return Array.from(teamMap.entries()).map(([tid, data]) => {
+      const team = teams.find((t) => t.id === tid);
+      return {
+        name: team?.name || 'Unknown',
+        commits: data.commits,
+        workHours: parseFloat(data.workHours.toFixed(1)),
+        aiDrivenHours: parseFloat(data.aiDrivenHours.toFixed(1)),
+      };
+    });
+  }, [developerCommits, teams]);
+
+  const availableTeams = useMemo(() => {
+    const teamIds = new Set(developerCommits.map((c) => c.team_id).filter(Boolean));
+    return teams.filter((t) => teamIds.has(t.id));
+  }, [developerCommits, teams]);
+
+  const availableTypes = useMemo(() => {
+    return [...new Set(developerCommits.map((c) => c.type || 'develop'))];
+  }, [developerCommits]);
+
+  const filteredCommits = useMemo(() => {
+    return developerCommits.filter((c) => {
+      if (filterTeam !== 'all' && c.team_id !== filterTeam) return false;
+      if (filterType !== 'all' && (c.type || 'develop') !== filterType) return false;
+      return true;
+    });
+  }, [developerCommits, filterTeam, filterType]);
 
   if (!developer) {
     return (
@@ -333,8 +376,8 @@ export function DeveloperDetail({
         ))}
       </div>
 
-      <div className={styles.chartsGrid}>
-        <div className={`${styles.chartCard} ${styles.chartCardFullWidth}`}>
+      <div className={styles.chartsRowThree}>
+        <div className={styles.chartCard}>
           <h3 className={styles.chartTitle}>Commits Over Time</h3>
           <div className={styles.chartContainer}>
             <ResponsiveContainer width="100%" height={300}>
@@ -361,34 +404,63 @@ export function DeveloperDetail({
           </div>
         </div>
 
-        {timeChartData.length > 0 && (
-          <div className={`${styles.chartCard} ${styles.chartCardFullWidth}`}>
-            <h3 className={styles.chartTitle}>Work Hours & AI Time Over Time</h3>
-            <div className={styles.chartContainer}>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={timeChartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                  <XAxis dataKey="date" stroke="#888" fontSize={12} />
-                  <YAxis stroke="#888" unit="h" />
-                  <Tooltip
-                    contentStyle={{
-                      background: '#1a1a2e',
-                      border: '1px solid #333',
-                      borderRadius: '4px',
-                      color: '#fff',
-                    }}
-                    itemStyle={{ color: '#fff' }}
-                    labelStyle={{ color: '#fff' }}
-                    formatter={(value, name) => [`${value}h`, name]}
-                  />
-                  <Legend />
-                  <Bar dataKey="aiTime" name="AI Time" fill="#6366f1" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="workHours" name="Work Hours" fill="#22c55e" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+        <div className={styles.chartCard}>
+          <h3 className={styles.chartTitle}>Team Breakdown</h3>
+          <div className={styles.chartContainer}>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={teamStatsData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                <XAxis dataKey="name" stroke="#888" />
+                <YAxis yAxisId="left" stroke="#888" />
+                <YAxis yAxisId="right" orientation="right" stroke="#888" unit="h" />
+                <Tooltip
+                  contentStyle={{
+                    background: '#1a1a2e',
+                    border: '1px solid #333',
+                    borderRadius: '4px',
+                    color: '#fff',
+                  }}
+                  itemStyle={{ color: '#fff' }}
+                  labelStyle={{ color: '#fff' }}
+                />
+                <Legend />
+                <Bar yAxisId="left" dataKey="commits" name="Commits" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                <Bar yAxisId="right" dataKey="workHours" name="Work Hours" fill="#22c55e" radius={[4, 4, 0, 0]} />
+                <Bar yAxisId="right" dataKey="aiDrivenHours" name="AI Driven Hours" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
-        )}
+        </div>
+
+        <div className={styles.chartCard}>
+          <h3 className={styles.chartTitle}>Work Hours & AI Time Over Time</h3>
+          <div className={styles.chartContainer}>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={timeChartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                <XAxis dataKey="date" stroke="#888" fontSize={12} />
+                <YAxis stroke="#888" unit="h" />
+                <Tooltip
+                  contentStyle={{
+                    background: '#1a1a2e',
+                    border: '1px solid #333',
+                    borderRadius: '4px',
+                    color: '#fff',
+                  }}
+                  itemStyle={{ color: '#fff' }}
+                  labelStyle={{ color: '#fff' }}
+                  formatter={(value, name) => [`${value}h`, name]}
+                />
+                <Legend />
+                <Bar dataKey="aiTime" name="AI Time" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="workHours" name="Work Hours" fill="#22c55e" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+
+      <div className={styles.chartsGrid}>
 
         <div className={styles.chartCard}>
           <h3 className={styles.chartTitle}>Evaluation Breakdown</h3>
@@ -423,7 +495,7 @@ export function DeveloperDetail({
                   outerRadius={100}
                   paddingAngle={2}
                   dataKey="value"
-                  label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
+                  label={({ percent }) => `${((percent ?? 0) * 100).toFixed(0)}%`}
                   labelLine={false}
                 >
                   {pieChartData.map((_, index) => (
@@ -461,7 +533,7 @@ export function DeveloperDetail({
                     outerRadius={100}
                     paddingAngle={2}
                     dataKey="value"
-                    label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
+                    label={({ percent }) => `${((percent ?? 0) * 100).toFixed(0)}%`}
                     labelLine={false}
                   >
                     {prefixPieData.map((_, index) => (
@@ -527,15 +599,59 @@ export function DeveloperDetail({
       </div>
 
       <div className={styles.commitsSection}>
-        <h3 className={styles.chartTitle}>Commit History ({developerCommits.length})</h3>
+        <div className={styles.commitsSectionHeader}>
+          <h3 className={styles.chartTitle}>Commit History ({filteredCommits.length})</h3>
+          <div className={styles.commitFilters}>
+            <div className={styles.filterGroup}>
+              <button
+                className={`${styles.filterBtn} ${filterTeam === 'all' ? styles.filterBtnActive : ''}`}
+                onClick={() => setFilterTeam('all')}
+              >
+                All
+              </button>
+              {availableTeams.map((t) => (
+                <button
+                  key={t.id}
+                  className={`${styles.filterBtn} ${filterTeam === t.id ? styles.filterBtnActive : ''}`}
+                  onClick={() => setFilterTeam(t.id)}
+                >
+                  {t.name}
+                </button>
+              ))}
+            </div>
+            <div className={styles.filterDivider} />
+            <div className={styles.filterGroup}>
+              <button
+                className={`${styles.filterBtn} ${filterType === 'all' ? styles.filterBtnActive : ''}`}
+                onClick={() => setFilterType('all')}
+              >
+                All
+              </button>
+              {availableTypes.map((t) => (
+                <button
+                  key={t}
+                  className={`${styles.filterBtn} ${filterType === t ? styles.filterBtnActive : ''}`}
+                  onClick={() => setFilterType(t)}
+                >
+                  {t.charAt(0).toUpperCase() + t.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
         <div className={styles.commitsList}>
-          {developerCommits.length === 0 ? (
+          {filteredCommits.length === 0 ? (
             <p className={styles.noCommits}>No commits in selected period</p>
           ) : (
-            developerCommits.map((commit) => (
+            filteredCommits.map((commit) => (
               <div key={commit.id} className={styles.commitCard}>
                 <div className={styles.commitHeader}>
                   <div className={styles.commitHeaderLeft}>
+                    {commit.team_id && (
+                      <span className={styles.commitTeamBadge}>
+                        {teams.find((t) => t.id === commit.team_id)?.name || 'Unknown'}
+                      </span>
+                    )}
                     <span className={styles.commitId}>{commit.commit_id.substring(0, 8)}</span>
                     <span className={styles[`typeBadge${(commit.type || 'develop').charAt(0).toUpperCase()}${(commit.type || 'develop').slice(1)}`] || styles.typeBadgeDevelop}>
                       {(commit.type || 'develop').toUpperCase()}

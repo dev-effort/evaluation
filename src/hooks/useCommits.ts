@@ -68,10 +68,10 @@ function computeDevStats(developer: Developer, devCommits: Commit[]): DeveloperS
     chore: devCommits.filter((c) => c.type === 'chore').length,
   };
 
+  const developCommits = devCommits.filter((c) => c.type === 'develop' || c.type === null);
+
   const workHoursByType = {
-    develop: devCommits
-      .filter((c) => c.type === 'develop' || c.type === null)
-      .reduce((sum, c) => sum + (c.work_hours || 0), 0),
+    develop: developCommits.reduce((sum, c) => sum + (c.work_hours || 0), 0),
     meeting: devCommits
       .filter((c) => c.type === 'meeting')
       .reduce((sum, c) => sum + (c.work_hours || 0), 0),
@@ -79,6 +79,20 @@ function computeDevStats(developer: Developer, devCommits: Commit[]): DeveloperS
       .filter((c) => c.type === 'chore')
       .reduce((sum, c) => sum + (c.work_hours || 0), 0),
   };
+
+  const aiDrivenMinutesByType = {
+    develop: developCommits.reduce((sum, c) => sum + (c.ai_driven_minutes || 0), 0),
+    meeting: devCommits
+      .filter((c) => c.type === 'meeting')
+      .reduce((sum, c) => sum + (c.ai_driven_minutes || 0), 0),
+    chore: devCommits
+      .filter((c) => c.type === 'chore')
+      .reduce((sum, c) => sum + (c.ai_driven_minutes || 0), 0),
+  };
+
+  const avgEvaluationDevelop = developCommits.length > 0
+    ? developCommits.reduce((sum, c) => sum + (c.evaluation_total || 0), 0) / developCommits.length
+    : 0;
 
   return {
     developer,
@@ -92,6 +106,8 @@ function computeDevStats(developer: Developer, devCommits: Commit[]): DeveloperS
     evaluationBreakdown,
     commitsByType,
     workHoursByType,
+    aiDrivenMinutesByType,
+    avgEvaluationDevelop,
   };
 }
 
