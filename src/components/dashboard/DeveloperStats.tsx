@@ -201,6 +201,14 @@ export function DeveloperStats({
     (sum, s) => sum + s.workHoursByType.develop,
     0,
   );
+  const totalMeetingWorkHours = stats.reduce(
+    (sum, s) => sum + s.workHoursByType.meeting,
+    0,
+  );
+  const totalChoreWorkHours = stats.reduce(
+    (sum, s) => sum + s.workHoursByType.chore,
+    0,
+  );
   const totalDevelopAiMinutes = stats.reduce(
     (sum, s) => sum + s.aiDrivenMinutesByType.develop,
     0,
@@ -284,8 +292,11 @@ export function DeveloperStats({
         <div className={styles.statCard}>
           <span className={styles.statValue}>{totalWorkHours.toFixed(1)}h</span>
           <span className={styles.statLabel}>Total Work Hours</span>
+          <span className={styles.statSub}>dev / chore / meeting</span>
           <span className={styles.statSub}>
-            dev {totalDevelopWorkHours.toFixed(1)}h
+            {totalDevelopWorkHours.toFixed(1)}h / &nbsp;
+            {totalChoreWorkHours.toFixed(1)}h / &nbsp;
+            {totalMeetingWorkHours.toFixed(1)}h
           </span>
         </div>
         <div className={styles.statCard}>
