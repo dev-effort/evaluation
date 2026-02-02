@@ -11,6 +11,7 @@ import {
   Legend,
 } from "recharts";
 import type {
+  Commit,
   DeveloperStats as DeveloperStatsType,
   DeveloperTeam,
   Team,
@@ -24,6 +25,7 @@ interface DeveloperStatsProps {
   teamStats: TeamStatsType[];
   teams: Team[];
   developerTeams: DeveloperTeam[];
+  commits: Commit[];
   dateRange: { startDate: string; endDate: string };
   onDateRangeChange: (startDate: string, endDate: string) => void;
 }
@@ -33,6 +35,7 @@ export function DeveloperStats({
   teamStats,
   teams,
   developerTeams,
+  commits,
   dateRange,
   onDateRangeChange,
 }: DeveloperStatsProps) {
@@ -63,6 +66,28 @@ export function DeveloperStats({
     });
     return map;
   }, [teamStats]);
+
+  const dailyCommitData = useMemo(() => {
+    const dateMap = new Map<
+      string,
+      { date: string; develop: number; meeting: number; chore: number }
+    >();
+    commits.forEach((c) => {
+      const d = new Date(c.created_at);
+      const key = d.toISOString().slice(0, 10);
+      const label = `${d.getMonth() + 1}/${d.getDate()}`;
+      if (!dateMap.has(key)) {
+        dateMap.set(key, { date: label, develop: 0, meeting: 0, chore: 0 });
+      }
+      const entry = dateMap.get(key)!;
+      const type = c.type || "develop";
+      entry[type] += 1;
+    });
+    return Array.from(dateMap.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([, v]) => v);
+  }, [commits]);
+
   const sortedByCommits = [...stats].sort(
     (a, b) => b.totalCommits - a.totalCommits,
   );
@@ -234,7 +259,88 @@ export function DeveloperStats({
         onFilterChange={onDateRangeChange}
       />
 
+      <div className={styles.statsGrid}>
+        <div className={styles.statCard}>
+          <span className={styles.statValue}>{totalCommits}</span>
+          <span className={styles.statLabel}>Total Commits</span>
+          <span className={styles.statSub}>
+            <span style={{ color: "#6366f1" }}>Dev {totalDevelop}</span>
+            {" / "}
+            <span style={{ color: "#22c55e" }}>Meet {totalMeeting}</span>
+            {" / "}
+            <span style={{ color: "#f59e0b" }}>Chore {totalChore}</span>
+          </span>
+        </div>
+        <div className={styles.statCard}>
+          <span className={styles.statValue}>{avgScore.toFixed(1)}</span>
+          <span className={styles.statLabel}>Avg Score (Dev)</span>
+        </div>
+        <div className={styles.statCard}>
+          <span className={styles.statValue}>{totalWorkHours.toFixed(1)}h</span>
+          <span className={styles.statLabel}>Total Work Hours</span>
+          <span className={styles.statSub}>
+            dev {totalDevelopWorkHours.toFixed(1)}h
+          </span>
+        </div>
+        <div className={styles.statCard}>
+          <span className={styles.statValue}>{totalDevelopAiMinutes}m</span>
+          <span className={styles.statLabel}>AI Minutes (Dev)</span>
+          <span className={styles.statSub}>
+            avg {avgDevelopAiMinutes.toFixed(0)}m
+          </span>
+        </div>
+        <div className={styles.statCard}>
+          <span className={styles.statValue}>
+            {avgProductivity.toFixed(0)}%
+          </span>
+          <span className={styles.statLabel}>Avg Productivity</span>
+        </div>
+        <div className={styles.statCard}>
+          <span className={styles.statValue}>
+            {totalLinesAdded + totalLinesDeleted}
+          </span>
+          <span className={styles.statLabel}>Total Lines</span>
+          <span className={styles.statSub}>
+            <span style={{ color: "#22c55e" }}>+{totalLinesAdded}</span>
+            {" / "}
+            <span style={{ color: "#ef4444" }}>-{totalLinesDeleted}</span>
+          </span>
+        </div>
+      </div>
+
       <div className={styles.chartsColumn}>
+        <div className={styles.chartCard}>
+          <h3 className={styles.chartTitle}>Daily Commits</h3>
+          <ResponsiveContainer width="100%" height={250}>
+            <BarChart data={dailyCommitData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+              <XAxis dataKey="date" stroke="#888" interval={0} />
+              <YAxis stroke="#888" allowDecimals={false} />
+              <Tooltip content={renderStackedTooltip("")} />
+              <Legend />
+              <Bar
+                dataKey="develop"
+                name="Develop"
+                stackId="daily"
+                fill={TYPE_COLORS.develop}
+              />
+              <Bar
+                dataKey="meeting"
+                name="Meeting"
+                stackId="daily"
+                fill={TYPE_COLORS.meeting}
+              />
+              <Bar
+                dataKey="chore"
+                name="Chore"
+                stackId="daily"
+                fill={TYPE_COLORS.chore}
+                radius={[4, 4, 0, 0]}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
         <div className={styles.chartCard}>
           <h3 className={styles.chartTitle}>Commits by Developer</h3>
           <ResponsiveContainer width="100%" height={250}>
@@ -452,221 +558,167 @@ export function DeveloperStats({
               layout="vertical"
               barCategoryGap="20%"
             >
-                <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                <XAxis type="number" stroke="#888" unit="h" />
-                <YAxis
-                  dataKey="name"
-                  type="category"
-                  stroke="#888"
-                  width={100}
-                />
-                <Tooltip content={renderStackedTooltip("h")} />
-                <Legend />
-                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                <Bar
-                  dataKey="develop"
-                  name="Develop"
-                  stackId="h"
-                  fill={TYPE_COLORS.develop}
-                  label={
-                    ((props: any) => {
-                      const v = totalWorkHoursByType[props.index]?.develop;
-                      if (!v) return null;
-                      return (
-                        <text
-                          x={props.x + props.width / 2}
-                          y={props.y + props.height / 2}
-                          fill="#fff"
-                          fontSize={10}
-                          textAnchor="middle"
-                          dominantBaseline="middle"
-                        >
-                          {v}h
-                        </text>
-                      );
-                    }) as any
-                  }
-                />
-                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                <Bar
-                  dataKey="meeting"
-                  name="Meeting"
-                  stackId="h"
-                  fill={TYPE_COLORS.meeting}
-                  label={
-                    ((props: any) => {
-                      const v = totalWorkHoursByType[props.index]?.meeting;
-                      if (!v) return null;
-                      return (
-                        <text
-                          x={props.x + props.width / 2}
-                          y={props.y + props.height / 2}
-                          fill="#fff"
-                          fontSize={10}
-                          textAnchor="middle"
-                          dominantBaseline="middle"
-                        >
-                          {v}h
-                        </text>
-                      );
-                    }) as any
-                  }
-                />
-                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                <Bar
-                  dataKey="chore"
-                  name="Chore"
-                  stackId="h"
-                  fill={TYPE_COLORS.chore}
-                  radius={[0, 4, 4, 0]}
-                  label={
-                    ((props: any) => {
-                      const v = totalWorkHoursByType[props.index]?.chore;
-                      if (!v) return null;
-                      return (
-                        <text
-                          x={props.x + props.width / 2}
-                          y={props.y + props.height / 2}
-                          fill="#fff"
-                          fontSize={10}
-                          textAnchor="middle"
-                          dominantBaseline="middle"
-                        >
-                          {v}h
-                        </text>
-                      );
-                    }) as any
-                  }
-                />
-                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                <Bar
-                  dataKey="aiDriven"
-                  name="AI Driven"
-                  stackId="ai"
-                  fill="#ef4444"
-                  label={
-                    ((props: any) => {
-                      const v = totalWorkHoursByType[props.index]?.aiDriven;
-                      if (!v) return null;
-                      return (
-                        <text
-                          x={props.x + props.width / 2}
-                          y={props.y + props.height / 2}
-                          fill="#fff"
-                          fontSize={10}
-                          textAnchor="middle"
-                          dominantBaseline="middle"
-                        >
-                          {v}h
-                        </text>
-                      );
-                    }) as any
-                  }
-                />
-                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                <Bar
-                  dataKey="aiMeeting"
-                  name="Meeting"
-                  stackId="ai"
-                  fill={TYPE_COLORS.meeting}
-                  legendType="none"
-                  label={
-                    ((props: any) => {
-                      const v = totalWorkHoursByType[props.index]?.aiMeeting;
-                      if (!v) return null;
-                      return (
-                        <text
-                          x={props.x + props.width / 2}
-                          y={props.y + props.height / 2}
-                          fill="#fff"
-                          fontSize={10}
-                          textAnchor="middle"
-                          dominantBaseline="middle"
-                        >
-                          {v}h
-                        </text>
-                      );
-                    }) as any
-                  }
-                />
-                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                <Bar
-                  dataKey="aiChore"
-                  name="Chore"
-                  stackId="ai"
-                  fill={TYPE_COLORS.chore}
-                  legendType="none"
-                  radius={[0, 4, 4, 0]}
-                  label={
-                    ((props: any) => {
-                      const v = totalWorkHoursByType[props.index]?.aiChore;
-                      if (!v) return null;
-                      return (
-                        <text
-                          x={props.x + props.width / 2}
-                          y={props.y + props.height / 2}
-                          fill="#fff"
-                          fontSize={10}
-                          textAnchor="middle"
-                          dominantBaseline="middle"
-                        >
-                          {v}h
-                        </text>
-                      );
-                    }) as any
-                  }
-                />
-              </BarChart>
-            </ResponsiveContainer>
-        </div>
-      </div>
-
-      <div className={styles.statsGrid}>
-        <div className={styles.statCard}>
-          <span className={styles.statValue}>{totalCommits}</span>
-          <span className={styles.statLabel}>Total Commits</span>
-          <span className={styles.statSub}>
-            <span style={{ color: "#6366f1" }}>Dev {totalDevelop}</span>
-            {" / "}
-            <span style={{ color: "#22c55e" }}>Meet {totalMeeting}</span>
-            {" / "}
-            <span style={{ color: "#f59e0b" }}>Chore {totalChore}</span>
-          </span>
-        </div>
-        <div className={styles.statCard}>
-          <span className={styles.statValue}>{avgScore.toFixed(1)}</span>
-          <span className={styles.statLabel}>Avg Score (Dev)</span>
-        </div>
-        <div className={styles.statCard}>
-          <span className={styles.statValue}>{totalWorkHours.toFixed(1)}h</span>
-          <span className={styles.statLabel}>Total Work Hours</span>
-          <span className={styles.statSub}>
-            dev {totalDevelopWorkHours.toFixed(1)}h
-          </span>
-        </div>
-        <div className={styles.statCard}>
-          <span className={styles.statValue}>{totalDevelopAiMinutes}m</span>
-          <span className={styles.statLabel}>AI Minutes (Dev)</span>
-          <span className={styles.statSub}>
-            avg {avgDevelopAiMinutes.toFixed(0)}m
-          </span>
-        </div>
-        <div className={styles.statCard}>
-          <span className={styles.statValue}>
-            {avgProductivity.toFixed(0)}%
-          </span>
-          <span className={styles.statLabel}>Avg Productivity</span>
-        </div>
-        <div className={styles.statCard}>
-          <span className={styles.statValue}>
-            {totalLinesAdded + totalLinesDeleted}
-          </span>
-          <span className={styles.statLabel}>Total Lines</span>
-          <span className={styles.statSub}>
-            <span style={{ color: "#22c55e" }}>+{totalLinesAdded}</span>
-            {" / "}
-            <span style={{ color: "#ef4444" }}>-{totalLinesDeleted}</span>
-          </span>
+              <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+              <XAxis type="number" stroke="#888" unit="h" />
+              <YAxis dataKey="name" type="category" stroke="#888" width={100} />
+              <Tooltip content={renderStackedTooltip("h")} />
+              <Legend />
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              <Bar
+                dataKey="develop"
+                name="Develop"
+                stackId="h"
+                fill={TYPE_COLORS.develop}
+                label={
+                  ((props: any) => {
+                    const v = totalWorkHoursByType[props.index]?.develop;
+                    if (!v) return null;
+                    return (
+                      <text
+                        x={props.x + props.width / 2}
+                        y={props.y + props.height / 2}
+                        fill="#fff"
+                        fontSize={10}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                      >
+                        {v}h
+                      </text>
+                    );
+                  }) as any
+                }
+              />
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              <Bar
+                dataKey="meeting"
+                name="Meeting"
+                stackId="h"
+                fill={TYPE_COLORS.meeting}
+                label={
+                  ((props: any) => {
+                    const v = totalWorkHoursByType[props.index]?.meeting;
+                    if (!v) return null;
+                    return (
+                      <text
+                        x={props.x + props.width / 2}
+                        y={props.y + props.height / 2}
+                        fill="#fff"
+                        fontSize={10}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                      >
+                        {v}h
+                      </text>
+                    );
+                  }) as any
+                }
+              />
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              <Bar
+                dataKey="chore"
+                name="Chore"
+                stackId="h"
+                fill={TYPE_COLORS.chore}
+                radius={[0, 4, 4, 0]}
+                label={
+                  ((props: any) => {
+                    const v = totalWorkHoursByType[props.index]?.chore;
+                    if (!v) return null;
+                    return (
+                      <text
+                        x={props.x + props.width / 2}
+                        y={props.y + props.height / 2}
+                        fill="#fff"
+                        fontSize={10}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                      >
+                        {v}h
+                      </text>
+                    );
+                  }) as any
+                }
+              />
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              <Bar
+                dataKey="aiDriven"
+                name="AI Driven"
+                stackId="ai"
+                fill="#ef4444"
+                label={
+                  ((props: any) => {
+                    const v = totalWorkHoursByType[props.index]?.aiDriven;
+                    if (!v) return null;
+                    return (
+                      <text
+                        x={props.x + props.width / 2}
+                        y={props.y + props.height / 2}
+                        fill="#fff"
+                        fontSize={10}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                      >
+                        {v}h
+                      </text>
+                    );
+                  }) as any
+                }
+              />
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              <Bar
+                dataKey="aiMeeting"
+                name="Meeting"
+                stackId="ai"
+                fill={TYPE_COLORS.meeting}
+                legendType="none"
+                label={
+                  ((props: any) => {
+                    const v = totalWorkHoursByType[props.index]?.aiMeeting;
+                    if (!v) return null;
+                    return (
+                      <text
+                        x={props.x + props.width / 2}
+                        y={props.y + props.height / 2}
+                        fill="#fff"
+                        fontSize={10}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                      >
+                        {v}h
+                      </text>
+                    );
+                  }) as any
+                }
+              />
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              <Bar
+                dataKey="aiChore"
+                name="Chore"
+                stackId="ai"
+                fill={TYPE_COLORS.chore}
+                legendType="none"
+                radius={[0, 4, 4, 0]}
+                label={
+                  ((props: any) => {
+                    const v = totalWorkHoursByType[props.index]?.aiChore;
+                    if (!v) return null;
+                    return (
+                      <text
+                        x={props.x + props.width / 2}
+                        y={props.y + props.height / 2}
+                        fill="#fff"
+                        fontSize={10}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                      >
+                        {v}h
+                      </text>
+                    );
+                  }) as any
+                }
+              />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
       </div>
 
