@@ -234,239 +234,224 @@ export function DeveloperStats({
         onFilterChange={onDateRangeChange}
       />
 
-      <div className={styles.chartsRowThree}>
+      <div className={styles.chartsColumn}>
         <div className={styles.chartCard}>
           <h3 className={styles.chartTitle}>Commits by Developer</h3>
-          <div className={styles.chartContainer}>
-            <ResponsiveContainer
-              width="100%"
-              height={Math.max(350, sortedByCommits.length * 40)}
-            >
-              <BarChart data={commitData} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                <XAxis type="number" stroke="#888" />
-                <YAxis
-                  dataKey="name"
-                  type="category"
-                  stroke="#888"
-                  width={100}
-                />
-                <Tooltip content={renderStackedTooltip("")} />
-                <Legend />
-                <Bar
-                  dataKey="develop"
-                  name="Develop"
-                  stackId="commits"
-                  fill={TYPE_COLORS.develop}
-                />
-                <Bar
-                  dataKey="meeting"
-                  name="Meeting"
-                  stackId="commits"
-                  fill={TYPE_COLORS.meeting}
-                />
-                <Bar
-                  dataKey="chore"
-                  name="Chore"
-                  stackId="commits"
-                  fill={TYPE_COLORS.chore}
-                  radius={[0, 4, 4, 0]}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          <ResponsiveContainer width="100%" height={250}>
+            <BarChart data={commitData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+              <XAxis
+                dataKey="name"
+                type="category"
+                stroke="#888"
+                interval={0}
+              />
+              <YAxis type="number" stroke="#888" />
+              <Tooltip content={renderStackedTooltip("")} />
+              <Legend />
+              <Bar
+                dataKey="develop"
+                name="Develop"
+                stackId="commits"
+                fill={TYPE_COLORS.develop}
+              />
+              <Bar
+                dataKey="meeting"
+                name="Meeting"
+                stackId="commits"
+                fill={TYPE_COLORS.meeting}
+              />
+              <Bar
+                dataKey="chore"
+                name="Chore"
+                stackId="commits"
+                fill={TYPE_COLORS.chore}
+                radius={[4, 4, 0, 0]}
+              />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
 
         <div className={styles.chartCard}>
           <h3 className={styles.chartTitle}>Work Hours by Developer</h3>
-          <div className={styles.chartContainer}>
-            <ResponsiveContainer
-              width="100%"
-              height={Math.max(350, sortedByCommits.length * 70)}
-            >
-              <BarChart
-                data={workHoursData}
-                layout="vertical"
-                barCategoryGap="20%"
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                <XAxis type="number" stroke="#888" unit="h" />
-                <YAxis
-                  dataKey="name"
-                  type="category"
-                  stroke="#888"
-                  width={100}
-                />
-                <Tooltip content={renderStackedTooltip("h")} />
-                <Legend />
-                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                <Bar
-                  dataKey="develop"
-                  name="Develop"
-                  stackId="h"
-                  fill={TYPE_COLORS.develop}
-                  label={
-                    ((props: any) => {
-                      const v = workHoursData[props.index]?.develop;
-                      if (!v) return null;
-                      return (
-                        <text
-                          x={props.x + props.width / 2}
-                          y={props.y + props.height / 2}
-                          fill="#fff"
-                          fontSize={10}
-                          textAnchor="middle"
-                          dominantBaseline="middle"
-                        >
-                          {v}h
-                        </text>
-                      );
-                    }) as any
-                  }
-                />
-                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                <Bar
-                  dataKey="meeting"
-                  name="Meeting"
-                  stackId="h"
-                  fill={TYPE_COLORS.meeting}
-                  label={
-                    ((props: any) => {
-                      const v = workHoursData[props.index]?.meeting;
-                      if (!v) return null;
-                      return (
-                        <text
-                          x={props.x + props.width / 2}
-                          y={props.y + props.height / 2}
-                          fill="#fff"
-                          fontSize={10}
-                          textAnchor="middle"
-                          dominantBaseline="middle"
-                        >
-                          {v}h
-                        </text>
-                      );
-                    }) as any
-                  }
-                />
-                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                <Bar
-                  dataKey="chore"
-                  name="Chore"
-                  stackId="h"
-                  fill={TYPE_COLORS.chore}
-                  radius={[0, 4, 4, 0]}
-                  label={
-                    ((props: any) => {
-                      const v = workHoursData[props.index]?.chore;
-                      if (!v) return null;
-                      return (
-                        <text
-                          x={props.x + props.width / 2}
-                          y={props.y + props.height / 2}
-                          fill="#fff"
-                          fontSize={10}
-                          textAnchor="middle"
-                          dominantBaseline="middle"
-                        >
-                          {v}h
-                        </text>
-                      );
-                    }) as any
-                  }
-                />
-                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                <Bar
-                  dataKey="aiDriven"
-                  name="AI Driven"
-                  stackId="ai"
-                  fill="#ef4444"
-                  label={
-                    ((props: any) => {
-                      const v = workHoursData[props.index]?.aiDriven;
-                      if (!v) return null;
-                      return (
-                        <text
-                          x={props.x + props.width / 2}
-                          y={props.y + props.height / 2}
-                          fill="#fff"
-                          fontSize={10}
-                          textAnchor="middle"
-                          dominantBaseline="middle"
-                        >
-                          {v}h
-                        </text>
-                      );
-                    }) as any
-                  }
-                />
-                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                <Bar
-                  dataKey="aiMeeting"
-                  name="Meeting"
-                  stackId="ai"
-                  fill={TYPE_COLORS.meeting}
-                  legendType="none"
-                  label={
-                    ((props: any) => {
-                      const v = workHoursData[props.index]?.aiMeeting;
-                      if (!v) return null;
-                      return (
-                        <text
-                          x={props.x + props.width / 2}
-                          y={props.y + props.height / 2}
-                          fill="#fff"
-                          fontSize={10}
-                          textAnchor="middle"
-                          dominantBaseline="middle"
-                        >
-                          {v}h
-                        </text>
-                      );
-                    }) as any
-                  }
-                />
-                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                <Bar
-                  dataKey="aiChore"
-                  name="Chore"
-                  stackId="ai"
-                  fill={TYPE_COLORS.chore}
-                  legendType="none"
-                  radius={[0, 4, 4, 0]}
-                  label={
-                    ((props: any) => {
-                      const v = workHoursData[props.index]?.aiChore;
-                      if (!v) return null;
-                      return (
-                        <text
-                          x={props.x + props.width / 2}
-                          y={props.y + props.height / 2}
-                          fill="#fff"
-                          fontSize={10}
-                          textAnchor="middle"
-                          dominantBaseline="middle"
-                        >
-                          {v}h
-                        </text>
-                      );
-                    }) as any
-                  }
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          <ResponsiveContainer width="100%" height={250}>
+            <BarChart data={workHoursData} barCategoryGap="20%">
+              <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+              <XAxis
+                dataKey="name"
+                type="category"
+                stroke="#888"
+                interval={0}
+              />
+              <YAxis type="number" stroke="#888" unit="h" />
+              <Tooltip content={renderStackedTooltip("h")} />
+              <Legend />
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              <Bar
+                dataKey="develop"
+                name="Develop"
+                stackId="h"
+                fill={TYPE_COLORS.develop}
+                label={
+                  ((props: any) => {
+                    const v = workHoursData[props.index]?.develop;
+                    if (!v) return null;
+                    return (
+                      <text
+                        x={props.x + props.width / 2}
+                        y={props.y + props.height / 2}
+                        fill="#fff"
+                        fontSize={10}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                      >
+                        {v}h
+                      </text>
+                    );
+                  }) as any
+                }
+              />
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              <Bar
+                dataKey="meeting"
+                name="Meeting"
+                stackId="h"
+                fill={TYPE_COLORS.meeting}
+                label={
+                  ((props: any) => {
+                    const v = workHoursData[props.index]?.meeting;
+                    if (!v) return null;
+                    return (
+                      <text
+                        x={props.x + props.width / 2}
+                        y={props.y + props.height / 2}
+                        fill="#fff"
+                        fontSize={10}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                      >
+                        {v}h
+                      </text>
+                    );
+                  }) as any
+                }
+              />
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              <Bar
+                dataKey="chore"
+                name="Chore"
+                stackId="h"
+                fill={TYPE_COLORS.chore}
+                radius={[4, 4, 0, 0]}
+                label={
+                  ((props: any) => {
+                    const v = workHoursData[props.index]?.chore;
+                    if (!v) return null;
+                    return (
+                      <text
+                        x={props.x + props.width / 2}
+                        y={props.y + props.height / 2}
+                        fill="#fff"
+                        fontSize={10}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                      >
+                        {v}h
+                      </text>
+                    );
+                  }) as any
+                }
+              />
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              <Bar
+                dataKey="aiDriven"
+                name="AI Driven"
+                stackId="ai"
+                fill="#ef4444"
+                label={
+                  ((props: any) => {
+                    const v = workHoursData[props.index]?.aiDriven;
+                    if (!v) return null;
+                    return (
+                      <text
+                        x={props.x + props.width / 2}
+                        y={props.y + props.height / 2}
+                        fill="#fff"
+                        fontSize={10}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                      >
+                        {v}h
+                      </text>
+                    );
+                  }) as any
+                }
+              />
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              <Bar
+                dataKey="aiMeeting"
+                name="Meeting"
+                stackId="ai"
+                fill={TYPE_COLORS.meeting}
+                legendType="none"
+                label={
+                  ((props: any) => {
+                    const v = workHoursData[props.index]?.aiMeeting;
+                    if (!v) return null;
+                    return (
+                      <text
+                        x={props.x + props.width / 2}
+                        y={props.y + props.height / 2}
+                        fill="#fff"
+                        fontSize={10}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                      >
+                        {v}h
+                      </text>
+                    );
+                  }) as any
+                }
+              />
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              <Bar
+                dataKey="aiChore"
+                name="Chore"
+                stackId="ai"
+                fill={TYPE_COLORS.chore}
+                legendType="none"
+                radius={[4, 4, 0, 0]}
+                label={
+                  ((props: any) => {
+                    const v = workHoursData[props.index]?.aiChore;
+                    if (!v) return null;
+                    return (
+                      <text
+                        x={props.x + props.width / 2}
+                        y={props.y + props.height / 2}
+                        fill="#fff"
+                        fontSize={10}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                      >
+                        {v}h
+                      </text>
+                    );
+                  }) as any
+                }
+              />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
 
         <div className={styles.chartCard}>
           <h3 className={styles.chartTitle}>Total Work Hours by Type</h3>
-          <div className={styles.chartContainer}>
-            <ResponsiveContainer width="100%" height={350}>
-              <BarChart
-                data={totalWorkHoursByType}
-                layout="vertical"
-                barCategoryGap="20%"
-              >
+          <ResponsiveContainer width="100%" height={150}>
+            <BarChart
+              data={totalWorkHoursByType}
+              layout="vertical"
+              barCategoryGap="20%"
+            >
                 <CartesianGrid strokeDasharray="3 3" stroke="#333" />
                 <XAxis type="number" stroke="#888" unit="h" />
                 <YAxis
@@ -633,7 +618,6 @@ export function DeveloperStats({
                 />
               </BarChart>
             </ResponsiveContainer>
-          </div>
         </div>
       </div>
 
