@@ -237,6 +237,29 @@ export function DeveloperStats({
     0,
   );
 
+  // Build develop-only lines per developer (and per developer+team)
+  const developLinesMap = useMemo(() => {
+    const devMap = new Map<string, { added: number; deleted: number }>();
+    const devTeamMap = new Map<string, { added: number; deleted: number }>();
+    commits.forEach((c) => {
+      if (c.type !== "develop" && c.type !== null) return;
+      if (!c.developer_id) return;
+      const devKey = c.developer_id;
+      const prev = devMap.get(devKey) || { added: 0, deleted: 0 };
+      prev.added += c.lines_added || 0;
+      prev.deleted += c.lines_deleted || 0;
+      devMap.set(devKey, prev);
+      if (c.team_id) {
+        const dtKey = `${c.developer_id}:${c.team_id}`;
+        const prevDt = devTeamMap.get(dtKey) || { added: 0, deleted: 0 };
+        prevDt.added += c.lines_added || 0;
+        prevDt.deleted += c.lines_deleted || 0;
+        devTeamMap.set(dtKey, prevDt);
+      }
+    });
+    return { devMap, devTeamMap };
+  }, [commits]);
+
   // Build team lookup: developerId -> team names
   const teamMap = useMemo(() => {
     const tMap = new Map<string, string>();
@@ -816,11 +839,11 @@ export function DeveloperStats({
                       <td>{s.avgEvaluationDevelop.toFixed(1)}</td>
                       <td>
                         <span style={{ color: "#22c55e" }}>
-                          +{s.totalLinesAdded}
+                          +{developLinesMap.devMap.get(devId)?.added ?? 0}
                         </span>
                         {" / "}
                         <span style={{ color: "#ef4444" }}>
-                          -{s.totalLinesDeleted}
+                          -{developLinesMap.devMap.get(devId)?.deleted ?? 0}
                         </span>
                       </td>
                       <td>
@@ -862,11 +885,11 @@ export function DeveloperStats({
                           <td>{pt.stats.avgEvaluationDevelop.toFixed(1)}</td>
                           <td>
                             <span style={{ color: "#22c55e" }}>
-                              +{pt.stats.totalLinesAdded}
+                              +{developLinesMap.devTeamMap.get(`${devId}:${pt.team.id}`)?.added ?? 0}
                             </span>
                             {" / "}
                             <span style={{ color: "#ef4444" }}>
-                              -{pt.stats.totalLinesDeleted}
+                              -{developLinesMap.devTeamMap.get(`${devId}:${pt.team.id}`)?.deleted ?? 0}
                             </span>
                           </td>
                           <td>

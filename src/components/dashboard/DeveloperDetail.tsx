@@ -205,6 +205,13 @@ export function DeveloperDetail({
       : 0,
   };
 
+  const developLinesAdded = developCommitsOnly.reduce(
+    (sum, c) => sum + (c.lines_added || 0), 0,
+  );
+  const developLinesDeleted = developCommitsOnly.reduce(
+    (sum, c) => sum + (c.lines_deleted || 0), 0,
+  );
+
   const radarData = [
     { subject: 'Complexity', value: developEvaluationBreakdown.complexity },
     { subject: 'Volume', value: developEvaluationBreakdown.volume },
@@ -318,12 +325,12 @@ export function DeveloperDetail({
           <span className={styles.statLabel}>Avg Productivity</span>
         </div>
         <div className={styles.statCard}>
-          <span className={styles.statValue}>{developer.totalLinesAdded + developer.totalLinesDeleted}</span>
+          <span className={styles.statValue}>{developLinesAdded + developLinesDeleted}</span>
           <span className={styles.statLabel}>Total Lines</span>
           <span className={styles.statSub}>
-            <span style={{ color: '#22c55e' }}>+{developer.totalLinesAdded}</span>
+            <span style={{ color: '#22c55e' }}>+{developLinesAdded}</span>
             {' / '}
-            <span style={{ color: '#ef4444' }}>-{developer.totalLinesDeleted}</span>
+            <span style={{ color: '#ef4444' }}>-{developLinesDeleted}</span>
           </span>
         </div>
       </div>
