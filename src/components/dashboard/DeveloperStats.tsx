@@ -217,9 +217,15 @@ export function DeveloperStats({
     totalDevelopWorkHours > 0 && totalDevelopAiMinutes > 0
       ? ((totalDevelopWorkHours * 60) / totalDevelopAiMinutes) * 100
       : 0;
-  const totalLinesAdded = stats.reduce((sum, s) => sum + s.totalLinesAdded, 0);
-  const totalLinesDeleted = stats.reduce(
-    (sum, s) => sum + s.totalLinesDeleted,
+  const developCommits = commits.filter(
+    (c) => c.type === "develop" || c.type === null,
+  );
+  const totalLinesAdded = developCommits.reduce(
+    (sum, c) => sum + (c.lines_added || 0),
+    0,
+  );
+  const totalLinesDeleted = developCommits.reduce(
+    (sum, c) => sum + (c.lines_deleted || 0),
     0,
   );
 
