@@ -40,6 +40,22 @@ export function DeveloperStats({
   onDateRangeChange,
 }: DeveloperStatsProps) {
   const [expandedDevs, setExpandedDevs] = useState<Set<string>>(new Set());
+  const [sortKey, setSortKey] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc' | null>(null);
+
+  const handleSort = (key: string) => {
+    if (sortKey === key) {
+      if (sortDirection === 'asc') {
+        setSortDirection('desc');
+      } else if (sortDirection === 'desc') {
+        setSortKey(null);
+        setSortDirection(null);
+      }
+    } else {
+      setSortKey(key);
+      setSortDirection('asc');
+    }
+  };
 
   const toggleExpand = (devId: string) => {
     setExpandedDevs((prev) => {
@@ -330,6 +346,44 @@ export function DeveloperStats({
     }
     return devTeamMap;
   }, [teams, developerTeams, stats]);
+
+  const sortedStats = useMemo(() => {
+    if (!sortKey || !sortDirection) {
+      return stats;
+    }
+    const getVal = (s: DeveloperStatsType): number | string => {
+      const devId = s.developer.id;
+      switch (sortKey) {
+        case 'name': return s.developer.name;
+        case 'team': return (teamMap.get(devId) || []).join(',');
+        case 'commits': return s.totalCommits;
+        case 'develop': return s.commitsByType.develop;
+        case 'meeting': return s.commitsByType.meeting;
+        case 'chore': return s.commitsByType.chore;
+        case 'avgScore': return s.avgEvaluationDevelop;
+        case 'lines': {
+          const l = developLinesMap.devMap.get(devId);
+          return l ? l.added + l.deleted : 0;
+        }
+        case 'workHours': return s.totalWorkHours;
+        case 'aiMinutes': return s.aiDrivenMinutesByType.develop;
+        case 'productivity': {
+          const wh = s.workHoursByType.develop;
+          const ai = s.aiDrivenMinutesByType.develop;
+          return wh > 0 && ai > 0 ? ((wh * 60) / ai) * 100 : 0;
+        }
+        default: return 0;
+      }
+    };
+    return [...stats].sort((a, b) => {
+      const va = getVal(a);
+      const vb = getVal(b);
+      const cmp = typeof va === 'string' && typeof vb === 'string'
+        ? va.localeCompare(vb)
+        : (va as number) - (vb as number);
+      return sortDirection === 'asc' ? cmp : -cmp;
+    });
+  }, [stats, sortKey, sortDirection, teamMap, developLinesMap]);
 
   return (
     <div className={styles.container}>
@@ -717,21 +771,34 @@ export function DeveloperStats({
           <table className={styles.table}>
             <thead>
               <tr>
-                <th>Name</th>
-                <th>Team</th>
-                <th>Commits</th>
-                <th>Develop</th>
-                <th>Meeting</th>
-                <th>Chore</th>
-                <th>Avg Score</th>
-                <th>Lines</th>
-                <th>Work Hours</th>
-                <th>AI Minutes</th>
-                <th>Productivity</th>
+                {[
+                  { key: 'name', label: 'Name' },
+                  { key: 'team', label: 'Team' },
+                  { key: 'commits', label: 'Commits' },
+                  { key: 'develop', label: 'Develop' },
+                  { key: 'meeting', label: 'Meeting' },
+                  { key: 'chore', label: 'Chore' },
+                  { key: 'avgScore', label: 'Avg Score' },
+                  { key: 'lines', label: 'Lines' },
+                  { key: 'workHours', label: 'Work Hours' },
+                  { key: 'aiMinutes', label: 'AI Minutes' },
+                  { key: 'productivity', label: 'Productivity' },
+                ].map((col) => (
+                  <th
+                    key={col.key}
+                    className={styles.sortableHeader}
+                    onClick={() => handleSort(col.key)}
+                  >
+                    {col.label}
+                    <span className={styles.sortIndicator}>
+                      {sortKey === col.key ? (sortDirection === 'asc' ? ' ▲' : ' ▼') : ''}
+                    </span>
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
-              {sortedByCommits.map((s) => {
+              {sortedStats.map((s) => {
                 const devId = s.developer.id;
                 const perTeam = devTeamStatsMap.get(devId) || [];
                 const isMultiTeam = perTeam.length > 1;

@@ -203,6 +203,21 @@
   text-decoration: underline;
 }
 
+.sortableHeader {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.sortableHeader:hover {
+  color: #a5b4fc;
+}
+
+.sortIndicator {
+  font-size: 0.65rem;
+  color: #6366f1;
+}
+
 @media (max-width: 900px) {
   .chartsGrid {
     grid-template-columns: 1fr;
