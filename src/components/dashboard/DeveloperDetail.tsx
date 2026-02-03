@@ -43,6 +43,43 @@ const renderStackedTooltip = (unit: string, showTotal = true) =>
     );
   };
 
+const renderWorkHoursTooltip = ({ active, payload, label }: any) => {
+  if (!active || !payload?.length) return null;
+  const humanKeys = ['develop', 'meeting', 'chore'];
+  const aiKeys = ['aiTime', 'aiMeeting', 'aiChore'];
+  const humanItems = payload.filter((p: any) => humanKeys.includes(p.dataKey));
+  const aiItems = payload.filter((p: any) => aiKeys.includes(p.dataKey));
+  const humanTotal = humanItems.reduce((sum: number, p: any) => sum + (p.value || 0), 0);
+  const aiTotal = aiItems.reduce((sum: number, p: any) => sum + (p.value || 0), 0);
+  return (
+    <div style={{ background: '#1a1a2e', border: '1px solid #333', borderRadius: '4px', padding: '0.5rem 0.75rem', color: '#fff', fontSize: '0.85rem' }}>
+      <p style={{ margin: '0 0 0.4rem', fontWeight: 600 }}>{label}</p>
+      <div style={{ display: 'flex', gap: '0.75rem' }}>
+        <div>
+          {humanItems.map((p: any) => (
+            <p key={p.dataKey} style={{ margin: '0.15rem 0', color: p.color }}>
+              {p.name}: {p.value}h
+            </p>
+          ))}
+          <p style={{ margin: '0.25rem 0 0', borderTop: '1px solid #444', paddingTop: '0.25rem', fontWeight: 600, color: '#fff' }}>
+            Work: {parseFloat(humanTotal.toFixed(1))}h
+          </p>
+        </div>
+        <div style={{ borderLeft: '1px solid #444', paddingLeft: '0.75rem' }}>
+          {aiItems.map((p: any) => (
+            <p key={p.dataKey} style={{ margin: '0.15rem 0', color: p.color }}>
+              {p.name}: {p.value}h
+            </p>
+          ))}
+          <p style={{ margin: '0.25rem 0 0', borderTop: '1px solid #444', paddingTop: '0.25rem', fontWeight: 600, color: '#fff' }}>
+            AI: {parseFloat(aiTotal.toFixed(1))}h
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const renderPieTooltip = (unit: string) =>
   ({ active, payload }: any) => {
     if (!active || !payload?.length) return null;
@@ -544,7 +581,7 @@ export function DeveloperDetail({
               <CartesianGrid strokeDasharray="3 3" stroke="#333" />
               <XAxis dataKey="date" stroke="#888" fontSize={12} />
               <YAxis stroke="#888" unit="h" />
-              <Tooltip content={renderStackedTooltip('h', false)} />
+              <Tooltip content={renderWorkHoursTooltip} />
               <Legend />
               <Bar dataKey="develop" name="Develop" stackId="h" fill="#6366f1" />
               <Bar dataKey="meeting" name="Meeting" stackId="h" fill="#22c55e" />
@@ -576,22 +613,6 @@ export function DeveloperDetail({
           </div>
         </div>
 
-        <div className={styles.chartCard}>
-          <h3 className={styles.chartTitle}>Team Work Hours</h3>
-          <div className={styles.chartContainer}>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={teamStatsData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                <XAxis dataKey="name" stroke="#888" />
-                <YAxis stroke="#888" unit="h" />
-                <Tooltip content={renderStackedTooltip('h', false)} />
-                <Legend />
-                <Bar dataKey="workHours" name="Work Hours" fill="#22c55e" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="aiDrivenHours" name="AI Driven Hours" fill="#f59e0b" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
       </div>
 
       <div className={styles.chartsGrid}>

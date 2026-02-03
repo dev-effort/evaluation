@@ -184,6 +184,44 @@ export function DeveloperStats({
       );
     };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const renderWorkHoursTooltip = ({ active, payload, label }: any) => {
+    if (!active || !payload?.length) return null;
+    const humanKeys = ['develop', 'meeting', 'chore'];
+    const aiKeys = ['aiDriven', 'aiMeeting', 'aiChore'];
+    const humanItems = payload.filter((p: any) => humanKeys.includes(p.dataKey));
+    const aiItems = payload.filter((p: any) => aiKeys.includes(p.dataKey));
+    const humanTotal = humanItems.reduce((sum: number, p: any) => sum + (p.value || 0), 0);
+    const aiTotal = aiItems.reduce((sum: number, p: any) => sum + (p.value || 0), 0);
+    return (
+      <div style={{ background: '#1a1a2e', border: '1px solid #333', borderRadius: '4px', padding: '0.5rem 0.75rem', color: '#fff', fontSize: '0.85rem' }}>
+        <p style={{ margin: '0 0 0.4rem', fontWeight: 600 }}>{label}</p>
+        <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <div>
+            {humanItems.map((p: any) => (
+              <p key={p.dataKey} style={{ margin: '0.15rem 0', color: p.color }}>
+                {p.name}: {p.value}h
+              </p>
+            ))}
+            <p style={{ margin: '0.25rem 0 0', borderTop: '1px solid #444', paddingTop: '0.25rem', fontWeight: 600, color: '#fff' }}>
+              Work: {parseFloat(humanTotal.toFixed(1))}h
+            </p>
+          </div>
+          <div style={{ borderLeft: '1px solid #444', paddingLeft: '0.75rem' }}>
+            {aiItems.map((p: any) => (
+              <p key={p.dataKey} style={{ margin: '0.15rem 0', color: p.color }}>
+                {p.name}: {p.value}h
+              </p>
+            ))}
+            <p style={{ margin: '0.25rem 0 0', borderTop: '1px solid #444', paddingTop: '0.25rem', fontWeight: 600, color: '#fff' }}>
+              AI: {parseFloat(aiTotal.toFixed(1))}h
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // Summary calculations
   const dayCount = useMemo(() => {
     const dates = new Set<string>();
@@ -489,162 +527,14 @@ export function DeveloperStats({
                 interval={0}
               />
               <YAxis type="number" stroke="#888" unit="h" />
-              <Tooltip content={renderStackedTooltip("h")} />
+              <Tooltip content={renderWorkHoursTooltip} />
               <Legend />
-              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-              <Bar
-                dataKey="develop"
-                name="Develop"
-                stackId="h"
-                fill={TYPE_COLORS.develop}
-                label={
-                  ((props: any) => {
-                    const v = workHoursData[props.index]?.develop;
-                    if (!v) return null;
-                    return (
-                      <text
-                        x={props.x + props.width / 2}
-                        y={props.y + props.height / 2}
-                        fill="#fff"
-                        fontSize={10}
-                        textAnchor="middle"
-                        dominantBaseline="middle"
-                      >
-                        {v}h
-                      </text>
-                    );
-                  }) as any
-                }
-              />
-              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-              <Bar
-                dataKey="meeting"
-                name="Meeting"
-                stackId="h"
-                fill={TYPE_COLORS.meeting}
-                label={
-                  ((props: any) => {
-                    const v = workHoursData[props.index]?.meeting;
-                    if (!v) return null;
-                    return (
-                      <text
-                        x={props.x + props.width / 2}
-                        y={props.y + props.height / 2}
-                        fill="#fff"
-                        fontSize={10}
-                        textAnchor="middle"
-                        dominantBaseline="middle"
-                      >
-                        {v}h
-                      </text>
-                    );
-                  }) as any
-                }
-              />
-              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-              <Bar
-                dataKey="chore"
-                name="Chore"
-                stackId="h"
-                fill={TYPE_COLORS.chore}
-                radius={[4, 4, 0, 0]}
-                label={
-                  ((props: any) => {
-                    const v = workHoursData[props.index]?.chore;
-                    if (!v) return null;
-                    return (
-                      <text
-                        x={props.x + props.width / 2}
-                        y={props.y + props.height / 2}
-                        fill="#fff"
-                        fontSize={10}
-                        textAnchor="middle"
-                        dominantBaseline="middle"
-                      >
-                        {v}h
-                      </text>
-                    );
-                  }) as any
-                }
-              />
-              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-              <Bar
-                dataKey="aiDriven"
-                name="AI Driven"
-                stackId="ai"
-                fill="#ef4444"
-                label={
-                  ((props: any) => {
-                    const v = workHoursData[props.index]?.aiDriven;
-                    if (!v) return null;
-                    return (
-                      <text
-                        x={props.x + props.width / 2}
-                        y={props.y + props.height / 2}
-                        fill="#fff"
-                        fontSize={10}
-                        textAnchor="middle"
-                        dominantBaseline="middle"
-                      >
-                        {v}h
-                      </text>
-                    );
-                  }) as any
-                }
-              />
-              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-              <Bar
-                dataKey="aiMeeting"
-                name="Meeting"
-                stackId="ai"
-                fill={TYPE_COLORS.meeting}
-                legendType="none"
-                label={
-                  ((props: any) => {
-                    const v = workHoursData[props.index]?.aiMeeting;
-                    if (!v) return null;
-                    return (
-                      <text
-                        x={props.x + props.width / 2}
-                        y={props.y + props.height / 2}
-                        fill="#fff"
-                        fontSize={10}
-                        textAnchor="middle"
-                        dominantBaseline="middle"
-                      >
-                        {v}h
-                      </text>
-                    );
-                  }) as any
-                }
-              />
-              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-              <Bar
-                dataKey="aiChore"
-                name="Chore"
-                stackId="ai"
-                fill={TYPE_COLORS.chore}
-                legendType="none"
-                radius={[4, 4, 0, 0]}
-                label={
-                  ((props: any) => {
-                    const v = workHoursData[props.index]?.aiChore;
-                    if (!v) return null;
-                    return (
-                      <text
-                        x={props.x + props.width / 2}
-                        y={props.y + props.height / 2}
-                        fill="#fff"
-                        fontSize={10}
-                        textAnchor="middle"
-                        dominantBaseline="middle"
-                      >
-                        {v}h
-                      </text>
-                    );
-                  }) as any
-                }
-              />
+              <Bar dataKey="develop" name="Develop" stackId="h" fill={TYPE_COLORS.develop} />
+              <Bar dataKey="meeting" name="Meeting" stackId="h" fill={TYPE_COLORS.meeting} />
+              <Bar dataKey="chore" name="Chore" stackId="h" fill={TYPE_COLORS.chore} radius={[4, 4, 0, 0]} />
+              <Bar dataKey="aiDriven" name="AI Driven" stackId="ai" fill="#ef4444" />
+              <Bar dataKey="aiMeeting" name="Meeting" stackId="ai" fill={TYPE_COLORS.meeting} legendType="none" />
+              <Bar dataKey="aiChore" name="Chore" stackId="ai" fill={TYPE_COLORS.chore} legendType="none" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -660,7 +550,7 @@ export function DeveloperStats({
               <CartesianGrid strokeDasharray="3 3" stroke="#333" />
               <XAxis type="number" stroke="#888" unit="h" />
               <YAxis dataKey="name" type="category" stroke="#888" width={100} />
-              <Tooltip content={renderStackedTooltip("h")} />
+              <Tooltip content={renderWorkHoursTooltip} />
               <Legend />
               {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
               <Bar
