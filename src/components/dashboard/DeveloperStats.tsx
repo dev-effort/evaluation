@@ -74,7 +74,7 @@ export function DeveloperStats({
     >();
     commits.forEach((c) => {
       const d = new Date(c.created_at);
-      const key = d.toISOString().slice(0, 10);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
       const label = `${d.getMonth() + 1}/${d.getDate()}`;
       if (!dateMap.has(key)) {
         dateMap.set(key, { date: label, develop: 0, meeting: 0, chore: 0 });
@@ -185,7 +185,6 @@ export function DeveloperStats({
     };
 
   // Summary calculations
-  const devCount = stats.length || 1;
   const totalCommits = stats.reduce((sum, s) => sum + s.totalCommits, 0);
   const totalDevelop = stats.reduce(
     (sum, s) => sum + s.commitsByType.develop,
@@ -220,7 +219,6 @@ export function DeveloperStats({
           0,
         ) / totalDevelop
       : 0;
-  const avgDevelopAiMinutes = totalDevelopAiMinutes / devCount;
   const avgProductivity =
     totalDevelopWorkHours > 0 && totalDevelopAiMinutes > 0
       ? ((totalDevelopWorkHours * 60) / totalDevelopAiMinutes) * 100
@@ -298,8 +296,8 @@ export function DeveloperStats({
 
       <div className={styles.statsGrid}>
         <div className={styles.statCard}>
-          <span className={styles.statValue}>{totalCommits}</span>
           <span className={styles.statLabel}>Total Commits</span>
+          <span className={styles.statValue}>{totalCommits}</span>
           <span className={styles.statSub}>
             <span style={{ color: "#6366f1" }}>Dev {totalDevelop}</span>
             {" / "}
@@ -309,37 +307,56 @@ export function DeveloperStats({
           </span>
         </div>
         <div className={styles.statCard}>
+          <span className={styles.statLabel}>Avg Score</span>
           <span className={styles.statValue}>{avgScore.toFixed(1)}</span>
-          <span className={styles.statLabel}>Avg Score (Dev)</span>
         </div>
         <div className={styles.statCard}>
+          <span className={styles.statLabel}>Human Work Hours</span>
           <span className={styles.statValue}>{totalWorkHours.toFixed(1)}h</span>
-          <span className={styles.statLabel}>Total Work Hours</span>
-          <span className={styles.statSub}>dev / chore / meeting</span>
           <span className={styles.statSub}>
-            {totalDevelopWorkHours.toFixed(1)}h / &nbsp;
-            {totalChoreWorkHours.toFixed(1)}h / &nbsp;
-            {totalMeetingWorkHours.toFixed(1)}h
+            <span style={{ color: "#6366f1" }}>
+              Dev {totalDevelopWorkHours.toFixed(1)}h
+            </span>
+            {" / "}
+            <span style={{ color: "#f59e0b" }}>
+              Chore {totalChoreWorkHours.toFixed(1)}h
+            </span>
+            {" / "}
+            <span style={{ color: "#22c55e" }}>
+              Meet {totalMeetingWorkHours.toFixed(1)}h
+            </span>
           </span>
         </div>
         <div className={styles.statCard}>
-          <span className={styles.statValue}>{totalDevelopAiMinutes}m</span>
-          <span className={styles.statLabel}>AI Minutes (Dev)</span>
+          <span className={styles.statLabel}>Human with AI Work Hours</span>
+          <span className={styles.statValue}>
+            {(totalDevelopAiMinutes / 60 + totalMeetingWorkHours + totalChoreWorkHours).toFixed(1)}h
+          </span>
           <span className={styles.statSub}>
-            avg {avgDevelopAiMinutes.toFixed(0)}m
+            <span style={{ color: "#ef4444" }}>
+              AI {(totalDevelopAiMinutes / 60).toFixed(1)}h
+            </span>
+            {" / "}
+            <span style={{ color: "#f59e0b" }}>
+              Chore {totalChoreWorkHours.toFixed(1)}h
+            </span>
+            {" / "}
+            <span style={{ color: "#22c55e" }}>
+              Meet {totalMeetingWorkHours.toFixed(1)}h
+            </span>
           </span>
         </div>
         <div className={styles.statCard}>
+          <span className={styles.statLabel}>Avg Productivity</span>
           <span className={styles.statValue}>
             {avgProductivity.toFixed(0)}%
           </span>
-          <span className={styles.statLabel}>Avg Productivity</span>
         </div>
         <div className={styles.statCard}>
+          <span className={styles.statLabel}>Total Lines</span>
           <span className={styles.statValue}>
             {totalLinesAdded + totalLinesDeleted}
           </span>
-          <span className={styles.statLabel}>Total Lines</span>
           <span className={styles.statSub}>
             <span style={{ color: "#22c55e" }}>+{totalLinesAdded}</span>
             {" / "}
@@ -885,11 +902,17 @@ export function DeveloperStats({
                           <td>{pt.stats.avgEvaluationDevelop.toFixed(1)}</td>
                           <td>
                             <span style={{ color: "#22c55e" }}>
-                              +{developLinesMap.devTeamMap.get(`${devId}:${pt.team.id}`)?.added ?? 0}
+                              +
+                              {developLinesMap.devTeamMap.get(
+                                `${devId}:${pt.team.id}`,
+                              )?.added ?? 0}
                             </span>
                             {" / "}
                             <span style={{ color: "#ef4444" }}>
-                              -{developLinesMap.devTeamMap.get(`${devId}:${pt.team.id}`)?.deleted ?? 0}
+                              -
+                              {developLinesMap.devTeamMap.get(
+                                `${devId}:${pt.team.id}`,
+                              )?.deleted ?? 0}
                             </span>
                           </td>
                           <td>
