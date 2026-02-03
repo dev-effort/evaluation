@@ -20,14 +20,68 @@ interface TeamStatsProps {
   onDateRangeChange: (startDate: string, endDate: string) => void;
 }
 
+const TYPE_COLORS = {
+  develop: '#6366f1',
+  meeting: '#22c55e',
+  chore: '#f59e0b',
+};
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const renderStackedTooltip = (unit: string) => ({ active, payload, label }: any) => {
+  if (!active || !payload?.length) return null;
+  const total = payload.reduce((sum: number, p: any) => sum + (p.value || 0), 0);
+  return (
+    <div style={{ background: '#1a1a2e', border: '1px solid #333', borderRadius: '4px', padding: '0.5rem 0.75rem', color: '#fff', fontSize: '0.85rem' }}>
+      <p style={{ margin: '0 0 0.25rem', fontWeight: 600 }}>{label}</p>
+      {payload.map((p: any) => (
+        <p key={p.name} style={{ margin: '0.15rem 0', color: p.color }}>
+          {p.name}: {p.value}{unit}
+        </p>
+      ))}
+      <p style={{ margin: '0.25rem 0 0', borderTop: '1px solid #444', paddingTop: '0.25rem', fontWeight: 600, color: '#fff' }}>
+        Total: {parseFloat(total.toFixed(1))}{unit}
+      </p>
+    </div>
+  );
+};
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const renderHoursTooltip = ({ active, payload, label }: any) => {
+  if (!active || !payload?.length) return null;
+  const workHours = payload.find((p: any) => p.dataKey === 'workHours');
+  const aiHours = payload.find((p: any) => p.dataKey === 'aiDrivenHours');
+  return (
+    <div style={{ background: '#1a1a2e', border: '1px solid #333', borderRadius: '4px', padding: '0.5rem 0.75rem', color: '#fff', fontSize: '0.85rem' }}>
+      <p style={{ margin: '0 0 0.25rem', fontWeight: 600 }}>{label}</p>
+      {workHours && (
+        <p style={{ margin: '0.15rem 0', color: workHours.color }}>
+          {workHours.name}: {workHours.value}h
+        </p>
+      )}
+      {aiHours && (
+        <p style={{ margin: '0.15rem 0', color: aiHours.color }}>
+          {aiHours.name}: {aiHours.value}h
+        </p>
+      )}
+    </div>
+  );
+};
+
 export function TeamStats({ stats, dateRange, onDateRangeChange }: TeamStatsProps) {
   const sortedByCommits = [...stats].sort((a, b) => b.totalCommits - a.totalCommits);
 
-  const commitData = sortedByCommits.map((s) => ({
+  // Commits by type (stacked bar chart)
+  const commitsByTypeData = sortedByCommits.map((s) => ({
     name: s.team.name,
-    commits: s.totalCommits,
-    avgScore: s.avgEvaluationDevelop,
-    workHours: s.totalWorkHours,
+    develop: s.commitsByType.develop,
+    meeting: s.commitsByType.meeting,
+    chore: s.commitsByType.chore,
+  }));
+
+  // Work hours and AI driven hours
+  const hoursData = sortedByCommits.map((s) => ({
+    name: s.team.name,
+    workHours: parseFloat(s.totalWorkHours.toFixed(1)),
     aiDrivenHours: parseFloat((s.aiDrivenMinutesByType.develop / 60).toFixed(1)),
   }));
 
@@ -37,14 +91,15 @@ export function TeamStats({ stats, dateRange, onDateRangeChange }: TeamStatsProp
     members: s.developers.length,
   }));
 
-  const avgCommits = commitData.length > 0
-    ? parseFloat((commitData.reduce((sum, d) => sum + d.commits, 0) / commitData.length).toFixed(1))
+  // Calculate averages
+  const avgTotalCommits = sortedByCommits.length > 0
+    ? parseFloat((sortedByCommits.reduce((sum, s) => sum + s.totalCommits, 0) / sortedByCommits.length).toFixed(1))
     : 0;
-  const avgWorkHours = commitData.length > 0
-    ? parseFloat((commitData.reduce((sum, d) => sum + d.workHours, 0) / commitData.length).toFixed(1))
+  const avgWorkHours = hoursData.length > 0
+    ? parseFloat((hoursData.reduce((sum, d) => sum + d.workHours, 0) / hoursData.length).toFixed(1))
     : 0;
-  const avgAiDrivenHours = commitData.length > 0
-    ? parseFloat((commitData.reduce((sum, d) => sum + d.aiDrivenHours, 0) / commitData.length).toFixed(1))
+  const avgAiDrivenHours = hoursData.length > 0
+    ? parseFloat((hoursData.reduce((sum, d) => sum + d.aiDrivenHours, 0) / hoursData.length).toFixed(1))
     : 0;
 
   const overallAvgScore = performanceData.length > 0
@@ -61,67 +116,81 @@ export function TeamStats({ stats, dateRange, onDateRangeChange }: TeamStatsProp
         onFilterChange={onDateRangeChange}
       />
 
-      <div className={styles.chartsGrid}>
+      <div className={styles.chartsColumn}>
         <div className={styles.chartCard}>
-          <h3 className={styles.chartTitle}>Commits & Work Hours & AI Driven by Team</h3>
+          <h3 className={styles.chartTitle}>Commits by Team</h3>
           <div className={styles.chartContainer}>
             <ResponsiveContainer width="100%" height={350}>
-              <BarChart data={commitData}>
+              <BarChart data={commitsByTypeData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#333" />
                 <XAxis dataKey="name" stroke="#888" />
-                <YAxis yAxisId="left" stroke="#888" />
-                <YAxis yAxisId="right" orientation="right" stroke="#888" />
-                <Tooltip
-                  contentStyle={{
-                    background: '#1a1a2e',
-                    border: '1px solid #333',
-                    borderRadius: '4px',
-                    color: '#fff',
-                  }}
-                />
+                <YAxis stroke="#888" />
+                <Tooltip content={renderStackedTooltip('')} />
                 <Legend />
                 <ReferenceLine
-                  yAxisId="left"
-                  y={avgCommits}
-                  stroke="#6366f1"
+                  y={avgTotalCommits}
+                  stroke="#ef4444"
                   strokeDasharray="5 5"
                   strokeWidth={2}
-                  label={{ value: `${avgCommits}`, fill: '#6366f1', position: 'left', fontSize: 12, fontWeight: 600 }}
+                  label={{ value: `Avg: ${avgTotalCommits}`, fill: '#ef4444', position: 'right', fontSize: 12, fontWeight: 600 }}
                 />
+                <Bar
+                  dataKey="develop"
+                  name="Develop"
+                  stackId="commits"
+                  fill={TYPE_COLORS.develop}
+                />
+                <Bar
+                  dataKey="meeting"
+                  name="Meeting"
+                  stackId="commits"
+                  fill={TYPE_COLORS.meeting}
+                />
+                <Bar
+                  dataKey="chore"
+                  name="Chore"
+                  stackId="commits"
+                  fill={TYPE_COLORS.chore}
+                  radius={[4, 4, 0, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className={styles.chartCard}>
+          <h3 className={styles.chartTitle}>Work Hours & AI Driven by Team</h3>
+          <div className={styles.chartContainer}>
+            <ResponsiveContainer width="100%" height={350}>
+              <BarChart data={hoursData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                <XAxis dataKey="name" stroke="#888" />
+                <YAxis stroke="#888" unit="h" />
+                <Tooltip content={renderHoursTooltip} />
+                <Legend />
                 <ReferenceLine
-                  yAxisId="right"
                   y={avgWorkHours}
                   stroke="#22c55e"
                   strokeDasharray="5 5"
                   strokeWidth={2}
-                  label={{ value: `${avgWorkHours}h`, fill: '#22c55e', position: 'right', fontSize: 12, fontWeight: 600 }}
+                  label={{ value: `${avgWorkHours}h`, fill: '#22c55e', position: 'left', fontSize: 12, fontWeight: 600 }}
                 />
                 <ReferenceLine
-                  yAxisId="right"
                   y={avgAiDrivenHours}
-                  stroke="#f59e0b"
+                  stroke="#ef4444"
                   strokeDasharray="5 5"
                   strokeWidth={2}
-                  label={{ value: `${avgAiDrivenHours}h`, fill: '#f59e0b', position: 'right', fontSize: 12, fontWeight: 600 }}
+                  label={{ value: `${avgAiDrivenHours}h`, fill: '#ef4444', position: 'right', fontSize: 12, fontWeight: 600 }}
                 />
                 <Bar
-                  yAxisId="left"
-                  dataKey="commits"
-                  fill="#6366f1"
-                  radius={[4, 4, 0, 0]}
-                  name="Commits"
-                />
-                <Bar
-                  yAxisId="right"
                   dataKey="workHours"
                   fill="#22c55e"
                   radius={[4, 4, 0, 0]}
                   name="Work Hours"
                 />
                 <Bar
-                  yAxisId="right"
                   dataKey="aiDrivenHours"
-                  fill="#f59e0b"
+                  fill="#ef4444"
                   radius={[4, 4, 0, 0]}
                   name="AI Driven Hours"
                 />
