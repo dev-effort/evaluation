@@ -584,24 +584,75 @@ export function DeveloperStats({
               <YAxis stroke="#888" allowDecimals={false} />
               <Tooltip content={renderStackedTooltip("")} />
               <Legend />
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
               <Bar
                 dataKey="develop"
                 name="Develop"
                 stackId="daily"
                 fill={TYPE_COLORS.develop}
+                label={
+                  ((props: any) => {
+                    const v = dailyCommitData[props.index]?.develop;
+                    if (!v) return null;
+                    return (
+                      <text
+                        x={props.x + props.width / 2}
+                        y={props.y + props.height / 2}
+                        fill="#fff"
+                        fontSize={9}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                      >{`${v}`}</text>
+                    );
+                  }) as any
+                }
               />
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
               <Bar
                 dataKey="meeting"
                 name="Meeting"
                 stackId="daily"
                 fill={TYPE_COLORS.meeting}
+                label={
+                  ((props: any) => {
+                    const v = dailyCommitData[props.index]?.meeting;
+                    if (!v) return null;
+                    return (
+                      <text
+                        x={props.x + props.width / 2}
+                        y={props.y + props.height / 2}
+                        fill="#fff"
+                        fontSize={9}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                      >{`${v}`}</text>
+                    );
+                  }) as any
+                }
               />
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
               <Bar
                 dataKey="chore"
                 name="Chore"
                 stackId="daily"
                 fill={TYPE_COLORS.chore}
                 radius={[4, 4, 0, 0]}
+                label={
+                  ((props: any) => {
+                    const v = dailyCommitData[props.index]?.chore;
+                    if (!v) return null;
+                    return (
+                      <text
+                        x={props.x + props.width / 2}
+                        y={props.y + props.height / 2}
+                        fill="#fff"
+                        fontSize={9}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                      >{`${v}`}</text>
+                    );
+                  }) as any
+                }
               />
             </BarChart>
           </ResponsiveContainer>
