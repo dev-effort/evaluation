@@ -22,6 +22,40 @@ import type { DeveloperStats, Commit, Developer, Team } from '@/types';
 import { DateFilter } from './DateFilter';
 import styles from './DeveloperDetail.module.css';
 
+const renderStackedTooltip = (unit: string, showTotal = true) =>
+  ({ active, payload, label }: any) => {
+    if (!active || !payload?.length) return null;
+    const total = payload.reduce((sum: number, p: any) => sum + (p.value || 0), 0);
+    return (
+      <div style={{ background: '#1a1a2e', border: '1px solid #333', borderRadius: '4px', padding: '0.5rem 0.75rem', color: '#fff', fontSize: '0.85rem' }}>
+        <p style={{ margin: '0 0 0.25rem', fontWeight: 600 }}>{label}</p>
+        {payload.map((p: any) => (
+          <p key={p.name} style={{ margin: '0.15rem 0', color: p.color }}>
+            {p.name}: {p.value}{unit}
+          </p>
+        ))}
+        {showTotal && (
+          <p style={{ margin: '0.25rem 0 0', borderTop: '1px solid #444', paddingTop: '0.25rem', fontWeight: 600, color: '#fff' }}>
+            Total: {parseFloat(total.toFixed(1))}{unit}
+          </p>
+        )}
+      </div>
+    );
+  };
+
+const renderPieTooltip = (unit: string) =>
+  ({ active, payload }: any) => {
+    if (!active || !payload?.length) return null;
+    const entry = payload[0];
+    return (
+      <div style={{ background: '#1a1a2e', border: '1px solid #333', borderRadius: '4px', padding: '0.5rem 0.75rem', color: '#fff', fontSize: '0.85rem' }}>
+        <p style={{ margin: 0, color: entry.payload?.fill || entry.color }}>
+          {entry.name}: {entry.value}{unit}
+        </p>
+      </div>
+    );
+  };
+
 function renderCommitMessage(message: string): ReactNode {
   const lines = message.split('\n');
   const result: ReactNode[] = [];
@@ -136,12 +170,15 @@ export function DeveloperDetail({
   }, [developerCommits]);
 
   const teamStatsData = useMemo(() => {
-    const teamMap = new Map<string, { commits: number; workHours: number; aiDrivenHours: number }>();
+    const teamMap = new Map<string, { develop: number; meeting: number; chore: number; workHours: number; aiDrivenHours: number }>();
     developerCommits.forEach((c) => {
       const tid = c.team_id;
       if (!tid) return;
-      const prev = teamMap.get(tid) || { commits: 0, workHours: 0, aiDrivenHours: 0 };
-      prev.commits += 1;
+      const prev = teamMap.get(tid) || { develop: 0, meeting: 0, chore: 0, workHours: 0, aiDrivenHours: 0 };
+      const type = c.type || 'develop';
+      if (type === 'develop') prev.develop += 1;
+      else if (type === 'meeting') prev.meeting += 1;
+      else if (type === 'chore') prev.chore += 1;
       prev.workHours += c.work_hours || 0;
       prev.aiDrivenHours += (c.ai_driven_minutes || 0) / 60;
       teamMap.set(tid, prev);
@@ -150,7 +187,9 @@ export function DeveloperDetail({
       const team = teams.find((t) => t.id === tid);
       return {
         name: team?.name || 'Unknown',
-        commits: data.commits,
+        develop: data.develop,
+        meeting: data.meeting,
+        chore: data.chore,
         workHours: parseFloat(data.workHours.toFixed(1)),
         aiDrivenHours: parseFloat(data.aiDrivenHours.toFixed(1)),
       };
@@ -260,22 +299,33 @@ export function DeveloperDetail({
     .reverse()
     .slice(-14);
 
-  // Daily work hours and AI time data
+  // Daily work hours and AI time data (per type)
   const timeByDate = developerCommits.reduce((acc, commit) => {
     const date = new Date(commit.created_at).toLocaleDateString('ko-KR');
     if (!acc[date]) {
-      acc[date] = { workHours: 0, aiTime: 0 };
+      acc[date] = { develop: 0, meeting: 0, chore: 0, aiTime: 0 };
     }
-    acc[date].workHours += commit.work_hours || 0;
-    acc[date].aiTime += (commit.ai_driven_minutes || 0) / 60; // Convert to hours
+    const type = commit.type || 'develop';
+    if (type === 'develop') {
+      acc[date].develop += commit.work_hours || 0;
+      acc[date].aiTime += (commit.ai_driven_minutes || 0) / 60;
+    } else if (type === 'meeting') {
+      acc[date].meeting += commit.work_hours || 0;
+    } else if (type === 'chore') {
+      acc[date].chore += commit.work_hours || 0;
+    }
     return acc;
-  }, {} as Record<string, { workHours: number; aiTime: number }>);
+  }, {} as Record<string, { develop: number; meeting: number; chore: number; aiTime: number }>);
 
   const timeChartData = Object.entries(timeByDate)
     .map(([date, data]) => ({
       date,
-      workHours: parseFloat(data.workHours.toFixed(1)),
+      develop: parseFloat(data.develop.toFixed(1)),
+      meeting: parseFloat(data.meeting.toFixed(1)),
+      chore: parseFloat(data.chore.toFixed(1)),
       aiTime: parseFloat(data.aiTime.toFixed(1)),
+      aiMeeting: parseFloat(data.meeting.toFixed(1)),
+      aiChore: parseFloat(data.chore.toFixed(1)),
     }))
     .reverse()
     .slice(-14);
@@ -454,7 +504,7 @@ export function DeveloperDetail({
               {stat.type === 'develop' && (
                 <>
                   <div className={styles.typeStatItem}>
-                    <span className={styles.typeStatValue}>{stat.totalAiMinutes}m</span>
+                    <span className={styles.typeStatValue}>{(stat.totalAiMinutes / 60).toFixed(1)}h</span>
                     <span className={styles.typeStatLabel}>AI Time</span>
                   </div>
                   <div className={styles.typeStatItem}>
@@ -468,25 +518,55 @@ export function DeveloperDetail({
         ))}
       </div>
 
-      <div className={styles.chartsRowThree}>
+      <div className={styles.chartCard} style={{ marginBottom: '1.5rem' }}>
+        <h3 className={styles.chartTitle}>Commits Over Time</h3>
+        <div className={styles.chartContainer}>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={commitChartData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+              <XAxis dataKey="date" stroke="#888" fontSize={12} />
+              <YAxis stroke="#888" />
+              <Tooltip content={renderStackedTooltip('')} />
+              <Legend />
+              <Bar dataKey="develop" name="Develop" stackId="commits" fill="#6366f1" />
+              <Bar dataKey="meeting" name="Meeting" stackId="commits" fill="#22c55e" />
+              <Bar dataKey="chore" name="Chore" stackId="commits" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      <div className={styles.chartCard} style={{ marginBottom: '1.5rem' }}>
+        <h3 className={styles.chartTitle}>Work Hours & AI Time Over Time</h3>
+        <div className={styles.chartContainer}>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={timeChartData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+              <XAxis dataKey="date" stroke="#888" fontSize={12} />
+              <YAxis stroke="#888" unit="h" />
+              <Tooltip content={renderStackedTooltip('h', false)} />
+              <Legend />
+              <Bar dataKey="develop" name="Develop" stackId="h" fill="#6366f1" />
+              <Bar dataKey="meeting" name="Meeting" stackId="h" fill="#22c55e" />
+              <Bar dataKey="chore" name="Chore" stackId="h" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="aiTime" name="AI Driven" stackId="ai" fill="#ef4444" />
+              <Bar dataKey="aiMeeting" name="Meeting" stackId="ai" fill="#22c55e" legendType="none" />
+              <Bar dataKey="aiChore" name="Chore" stackId="ai" fill="#f59e0b" legendType="none" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      <div className={styles.chartsGrid}>
         <div className={styles.chartCard}>
-          <h3 className={styles.chartTitle}>Commits Over Time</h3>
+          <h3 className={styles.chartTitle}>Team Commits</h3>
           <div className={styles.chartContainer}>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={commitChartData}>
+              <BarChart data={teamStatsData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                <XAxis dataKey="date" stroke="#888" fontSize={12} />
-                <YAxis stroke="#888" />
-                <Tooltip
-                  contentStyle={{
-                    background: '#1a1a2e',
-                    border: '1px solid #333',
-                    borderRadius: '4px',
-                    color: '#fff',
-                  }}
-                  itemStyle={{ color: '#fff' }}
-                  labelStyle={{ color: '#fff' }}
-                />
+                <XAxis dataKey="name" stroke="#888" />
+                <YAxis stroke="#888" allowDecimals={false} />
+                <Tooltip content={renderStackedTooltip('')} />
                 <Legend />
                 <Bar dataKey="develop" name="Develop" stackId="commits" fill="#6366f1" />
                 <Bar dataKey="meeting" name="Meeting" stackId="commits" fill="#22c55e" />
@@ -497,55 +577,17 @@ export function DeveloperDetail({
         </div>
 
         <div className={styles.chartCard}>
-          <h3 className={styles.chartTitle}>Team Breakdown</h3>
+          <h3 className={styles.chartTitle}>Team Work Hours</h3>
           <div className={styles.chartContainer}>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={teamStatsData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#333" />
                 <XAxis dataKey="name" stroke="#888" />
-                <YAxis yAxisId="left" stroke="#888" />
-                <YAxis yAxisId="right" orientation="right" stroke="#888" unit="h" />
-                <Tooltip
-                  contentStyle={{
-                    background: '#1a1a2e',
-                    border: '1px solid #333',
-                    borderRadius: '4px',
-                    color: '#fff',
-                  }}
-                  itemStyle={{ color: '#fff' }}
-                  labelStyle={{ color: '#fff' }}
-                />
-                <Legend />
-                <Bar yAxisId="left" dataKey="commits" name="Commits" fill="#6366f1" radius={[4, 4, 0, 0]} />
-                <Bar yAxisId="right" dataKey="workHours" name="Work Hours" fill="#22c55e" radius={[4, 4, 0, 0]} />
-                <Bar yAxisId="right" dataKey="aiDrivenHours" name="AI Driven Hours" fill="#f59e0b" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        <div className={styles.chartCard}>
-          <h3 className={styles.chartTitle}>Work Hours & AI Time Over Time</h3>
-          <div className={styles.chartContainer}>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={timeChartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                <XAxis dataKey="date" stroke="#888" fontSize={12} />
                 <YAxis stroke="#888" unit="h" />
-                <Tooltip
-                  contentStyle={{
-                    background: '#1a1a2e',
-                    border: '1px solid #333',
-                    borderRadius: '4px',
-                    color: '#fff',
-                  }}
-                  itemStyle={{ color: '#fff' }}
-                  labelStyle={{ color: '#fff' }}
-                  formatter={(value, name) => [`${value}h`, name]}
-                />
+                <Tooltip content={renderStackedTooltip('h', false)} />
                 <Legend />
-                <Bar dataKey="aiTime" name="AI Time" fill="#6366f1" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="workHours" name="Work Hours" fill="#22c55e" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="aiDrivenHours" name="AI Driven Hours" fill="#f59e0b" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -594,17 +636,7 @@ export function DeveloperDetail({
                     <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip
-                  contentStyle={{
-                    background: '#1a1a2e',
-                    border: '1px solid #333',
-                    borderRadius: '4px',
-                    color: '#fff',
-                  }}
-                  itemStyle={{ color: '#fff' }}
-                  labelStyle={{ color: '#fff' }}
-                  formatter={(value) => [`${value} commits`, 'Count']}
-                />
+                <Tooltip content={renderPieTooltip(' commits')} />
                 <Legend />
               </PieChart>
             </ResponsiveContainer>
@@ -632,17 +664,7 @@ export function DeveloperDetail({
                       <Cell key={`cell-${index}`} fill={PREFIX_COLORS[index % PREFIX_COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip
-                    contentStyle={{
-                      background: '#1a1a2e',
-                      border: '1px solid #333',
-                      borderRadius: '4px',
-                      color: '#fff',
-                    }}
-                    itemStyle={{ color: '#fff' }}
-                    labelStyle={{ color: '#fff' }}
-                    formatter={(value) => [`${value} commits`, 'Count']}
-                  />
+                  <Tooltip content={renderPieTooltip(' commits')} />
                   <Legend />
                 </PieChart>
               </ResponsiveContainer>
@@ -671,17 +693,7 @@ export function DeveloperDetail({
                       <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip
-                    contentStyle={{
-                      background: '#1a1a2e',
-                      border: '1px solid #333',
-                      borderRadius: '4px',
-                      color: '#fff',
-                    }}
-                    itemStyle={{ color: '#fff' }}
-                    labelStyle={{ color: '#fff' }}
-                    formatter={(value) => [`${value}h`, 'Hours']}
-                  />
+                  <Tooltip content={renderPieTooltip('h')} />
                   <Legend />
                 </PieChart>
               </ResponsiveContainer>
