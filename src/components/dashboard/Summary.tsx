@@ -38,43 +38,47 @@ const TYPE_COLORS = {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const renderStackedTooltip = ({ active, payload, label }: any) => {
-  if (!active || !payload?.length) return null;
-  const total = payload.reduce(
-    (sum: number, p: any) => sum + (p.value || 0),
-    0,
-  );
-  return (
-    <div
-      style={{
-        background: "#1a1a2e",
-        border: "1px solid #333",
-        borderRadius: "4px",
-        padding: "0.5rem 0.75rem",
-        color: "#fff",
-        fontSize: "0.85rem",
-      }}
-    >
-      <p style={{ margin: "0 0 0.25rem", fontWeight: 600 }}>{label}</p>
-      {payload.map((p: any) => (
-        <p key={p.name} style={{ margin: "0.15rem 0", color: p.color }}>
-          {p.name}: {p.value}
-        </p>
-      ))}
-      <p
+const renderStackedTooltip =
+  (unit: string) =>
+  ({ active, payload, label }: any) => {
+    if (!active || !payload?.length) return null;
+    const total = payload.reduce(
+      (sum: number, p: any) => sum + (p.value || 0),
+      0,
+    );
+    return (
+      <div
         style={{
-          margin: "0.25rem 0 0",
-          borderTop: "1px solid #444",
-          paddingTop: "0.25rem",
-          fontWeight: 600,
+          background: "#1a1a2e",
+          border: "1px solid #333",
+          borderRadius: "4px",
+          padding: "0.5rem 0.75rem",
           color: "#fff",
+          fontSize: "0.85rem",
         }}
       >
-        Total: {total}
-      </p>
-    </div>
-  );
-};
+        <p style={{ margin: "0 0 0.25rem", fontWeight: 600 }}>{label}</p>
+        {payload.map((p: any) => (
+          <p key={p.name} style={{ margin: "0.15rem 0", color: p.color }}>
+            {p.name}: {p.value}
+            {unit}
+          </p>
+        ))}
+        <p
+          style={{
+            margin: "0.25rem 0 0",
+            borderTop: "1px solid #444",
+            paddingTop: "0.25rem",
+            fontWeight: 600,
+            color: "#fff",
+          }}
+        >
+          Total: {parseFloat(total.toFixed(1))}
+          {unit}
+        </p>
+      </div>
+    );
+  };
 
 export function Summary({
   summary,
@@ -92,6 +96,13 @@ export function Summary({
   const teamDistribution = teamStats.map((ts) => ({
     name: ts.team.name,
     value: ts.totalCommits,
+  }));
+
+  const teamWorkHoursData = teamStats.map((ts) => ({
+    name: ts.team.name,
+    ai: parseFloat((ts.aiDrivenMinutesByType.develop / 60).toFixed(1)),
+    meeting: parseFloat(ts.workHoursByType.meeting.toFixed(1)),
+    chore: parseFloat(ts.workHoursByType.chore.toFixed(1)),
   }));
 
   return (
@@ -117,11 +128,17 @@ export function Summary({
           <span className={styles.statLabel}>Total Commits</span>
           <span className={styles.statValue}>{summary.totalCommits}</span>
           <span className={styles.statSub}>
-            <span style={{ color: "#6366f1" }}>Dev {summary.commitsByType.develop}</span>
+            <span style={{ color: "#6366f1" }}>
+              Dev {summary.commitsByType.develop}
+            </span>
             {" / "}
-            <span style={{ color: "#22c55e" }}>Meet {summary.commitsByType.meeting}</span>
+            <span style={{ color: "#22c55e" }}>
+              Meet {summary.commitsByType.meeting}
+            </span>
             {" / "}
-            <span style={{ color: "#f59e0b" }}>Chore {summary.commitsByType.chore}</span>
+            <span style={{ color: "#f59e0b" }}>
+              Chore {summary.commitsByType.chore}
+            </span>
           </span>
         </div>
         <div className={styles.statCard}>
@@ -138,6 +155,42 @@ export function Summary({
         </div>
       </div>
 
+      <div className={styles.chartCard} style={{ marginBottom: "1.5rem" }}>
+        <h3 className={styles.chartTitle}>Commit Distribution</h3>
+        <div className={styles.chartContainer}>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={teamDistribution}
+                dataKey="value"
+                nameKey="name"
+                cx="50%"
+                cy="50%"
+                outerRadius={100}
+                label={({ name, percent }) =>
+                  `${name} (${((percent ?? 0) * 100).toFixed(0)}%)`
+                }
+              >
+                {teamDistribution.map((_, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={COLORS[index % COLORS.length]}
+                  />
+                ))}
+              </Pie>
+              <Tooltip
+                contentStyle={{
+                  background: "#1a1a2e",
+                  border: "1px solid #333",
+                  borderRadius: "4px",
+                  color: "#fff",
+                }}
+              />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
       <div className={styles.chartsColumn}>
         <div className={styles.chartCard}>
           <h3 className={styles.chartTitle}>Commits by Team</h3>
@@ -147,7 +200,7 @@ export function Summary({
                 <CartesianGrid strokeDasharray="3 3" stroke="#333" />
                 <XAxis dataKey="name" stroke="#888" />
                 <YAxis stroke="#888" />
-                <Tooltip content={renderStackedTooltip} />
+                <Tooltip content={renderStackedTooltip("")} />
                 <Legend />
                 <Bar
                   dataKey="develop"
@@ -174,37 +227,35 @@ export function Summary({
         </div>
 
         <div className={styles.chartCard}>
-          <h3 className={styles.chartTitle}>Commit Distribution</h3>
+          <h3 className={styles.chartTitle}>Work Hours by Team</h3>
           <div className={styles.chartContainer}>
             <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={teamDistribution}
-                  dataKey="value"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={100}
-                  label={({ name, percent }) =>
-                    `${name} (${((percent ?? 0) * 100).toFixed(0)}%)`
-                  }
-                >
-                  {teamDistribution.map((_, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={COLORS[index % COLORS.length]}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{
-                    background: "#1a1a2e",
-                    border: "1px solid #333",
-                    borderRadius: "4px",
-                    color: "#fff",
-                  }}
+              <BarChart data={teamWorkHoursData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                <XAxis dataKey="name" stroke="#888" />
+                <YAxis stroke="#888" unit="h" />
+                <Tooltip content={renderStackedTooltip("h")} />
+                <Legend />
+                <Bar
+                  dataKey="ai"
+                  name="AI Driven"
+                  stackId="hours"
+                  fill="#ef4444"
                 />
-              </PieChart>
+                <Bar
+                  dataKey="meeting"
+                  name="Meeting"
+                  stackId="hours"
+                  fill={TYPE_COLORS.meeting}
+                />
+                <Bar
+                  dataKey="chore"
+                  name="Chore"
+                  stackId="hours"
+                  fill={TYPE_COLORS.chore}
+                  radius={[4, 4, 0, 0]}
+                />
+              </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
