@@ -85,12 +85,6 @@ export function TeamStats({ stats, dateRange, onDateRangeChange }: TeamStatsProp
     aiDrivenHours: parseFloat((s.aiDrivenMinutesByType.develop / 60).toFixed(1)),
   }));
 
-  const performanceData = sortedByCommits.map((s) => ({
-    name: s.team.name,
-    avgScore: parseFloat(s.avgEvaluationDevelop.toFixed(2)),
-    members: s.developers.length,
-  }));
-
   // Calculate averages
   const avgTotalCommits = sortedByCommits.length > 0
     ? parseFloat((sortedByCommits.reduce((sum, s) => sum + s.totalCommits, 0) / sortedByCommits.length).toFixed(1))
@@ -100,10 +94,6 @@ export function TeamStats({ stats, dateRange, onDateRangeChange }: TeamStatsProp
     : 0;
   const avgAiDrivenHours = hoursData.length > 0
     ? parseFloat((hoursData.reduce((sum, d) => sum + d.aiDrivenHours, 0) / hoursData.length).toFixed(1))
-    : 0;
-
-  const overallAvgScore = performanceData.length > 0
-    ? parseFloat((performanceData.reduce((sum, d) => sum + d.avgScore, 0) / performanceData.length).toFixed(2))
     : 0;
 
   return (
@@ -193,40 +183,6 @@ export function TeamStats({ stats, dateRange, onDateRangeChange }: TeamStatsProp
                   fill="#ef4444"
                   radius={[4, 4, 0, 0]}
                   name="AI Driven Hours"
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        <div className={styles.chartCard}>
-          <h3 className={styles.chartTitle}>Average Evaluation Score by Team</h3>
-          <div className={styles.chartContainer}>
-            <ResponsiveContainer width="100%" height={350}>
-              <BarChart data={performanceData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                <XAxis dataKey="name" stroke="#888" />
-                <YAxis stroke="#888" domain={[0, 10]} />
-                <Tooltip
-                  contentStyle={{
-                    background: '#1a1a2e',
-                    border: '1px solid #333',
-                    borderRadius: '4px',
-                    color: '#fff',
-                  }}
-                />
-                <ReferenceLine
-                  y={overallAvgScore}
-                  stroke="#ef4444"
-                  strokeDasharray="5 5"
-                  strokeWidth={2}
-                  label={{ value: `${overallAvgScore}`, fill: '#ef4444', position: 'left', fontSize: 12, fontWeight: 600 }}
-                />
-                <Bar
-                  dataKey="avgScore"
-                  fill="#f59e0b"
-                  radius={[4, 4, 0, 0]}
-                  name="Avg Score"
                 />
               </BarChart>
             </ResponsiveContainer>

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   BarChart,
@@ -141,14 +141,24 @@ export function TeamDetail({
     chore: '#f59e0b',
   };
 
-  const memberCommitData = [...team.developers]
-    .sort((a, b) => b.totalCommits - a.totalCommits)
-    .map((d) => ({
-      name: d.developer.name,
-      develop: d.commitsByType.develop,
-      meeting: d.commitsByType.meeting,
-      chore: d.commitsByType.chore,
-    }));
+  const [isMemberChartHovered, setIsMemberChartHovered] = useState(false);
+
+  const sortedDevelopers = [...team.developers].sort((a, b) => b.totalCommits - a.totalCommits);
+
+  const memberCommitData = sortedDevelopers.map((d) => ({
+    name: d.developer.name,
+    develop: d.commitsByType.develop,
+    meeting: d.commitsByType.meeting,
+    chore: d.commitsByType.chore,
+  }));
+
+  // Member time data for hover chart (AI, Meeting, Chore hours)
+  const memberTimeData = sortedDevelopers.map((d) => ({
+    name: d.developer.name,
+    ai: parseFloat((d.aiDrivenMinutesByType.develop / 60).toFixed(1)),
+    meeting: parseFloat(d.workHoursByType.meeting.toFixed(1)),
+    chore: parseFloat(d.workHoursByType.chore.toFixed(1)),
+  }));
 
   const pieChartData = [
     { name: 'Develop', value: teamTypeStats.develop },
@@ -353,45 +363,91 @@ export function TeamDetail({
       </div>
 
       <div className={styles.chartsGrid}>
-        <div className={`${styles.chartCard} ${styles.chartCardFullWidth}`}>
-          <h3 className={styles.chartTitle}>Commits by Member</h3>
+        <div
+          className={`${styles.chartCard} ${styles.chartCardFullWidth}`}
+          onMouseEnter={() => setIsMemberChartHovered(true)}
+          onMouseLeave={() => setIsMemberChartHovered(false)}
+        >
+          <h3 className={styles.chartTitle}>
+            {isMemberChartHovered ? 'Hours by Member (AI / Meeting / Chore)' : 'Commits by Member'}
+          </h3>
           <div className={styles.chartContainer}>
-            <ResponsiveContainer width="100%" height={Math.max(300, team.developers.length * 50)}>
-              <BarChart data={memberCommitData} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                <XAxis type="number" stroke="#888" />
-                <YAxis dataKey="name" type="category" stroke="#888" width={100} />
-                <Tooltip
-                  contentStyle={{
-                    background: '#1a1a2e',
-                    border: '1px solid #333',
-                    borderRadius: '4px',
-                    color: '#fff',
-                  }}
-                  itemStyle={{ color: '#fff' }}
-                  labelStyle={{ color: '#fff' }}
-                />
-                <Legend />
-                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                <Bar dataKey="develop" name="Develop" stackId="commits" fill={TYPE_COLORS.develop} label={((props: any) => {
-                  const v = memberCommitData[props.index]?.develop;
-                  if (!v) return null;
-                  return <text x={props.x + props.width / 2} y={props.y + props.height / 2} fill="#fff" fontSize={11} textAnchor="middle" dominantBaseline="middle">{`Dev(${v})`}</text>;
-                }) as any} />
-                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                <Bar dataKey="meeting" name="Meeting" stackId="commits" fill={TYPE_COLORS.meeting} label={((props: any) => {
-                  const v = memberCommitData[props.index]?.meeting;
-                  if (!v) return null;
-                  return <text x={props.x + props.width / 2} y={props.y + props.height / 2} fill="#fff" fontSize={11} textAnchor="middle" dominantBaseline="middle">{`Meet(${v})`}</text>;
-                }) as any} />
-                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                <Bar dataKey="chore" name="Chore" stackId="commits" fill={TYPE_COLORS.chore} radius={[0, 4, 4, 0]} label={((props: any) => {
-                  const v = memberCommitData[props.index]?.chore;
-                  if (!v) return null;
-                  return <text x={props.x + props.width / 2} y={props.y + props.height / 2} fill="#fff" fontSize={11} textAnchor="middle" dominantBaseline="middle">{`Chore(${v})`}</text>;
-                }) as any} />
-              </BarChart>
-            </ResponsiveContainer>
+            {isMemberChartHovered ? (
+              <ResponsiveContainer width="100%" height={Math.max(300, team.developers.length * 50)}>
+                <BarChart data={memberTimeData} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                  <XAxis type="number" stroke="#888" unit="h" />
+                  <YAxis dataKey="name" type="category" stroke="#888" width={100} />
+                  <Tooltip
+                    contentStyle={{
+                      background: '#1a1a2e',
+                      border: '1px solid #333',
+                      borderRadius: '4px',
+                      color: '#fff',
+                    }}
+                    itemStyle={{ color: '#fff' }}
+                    labelStyle={{ color: '#fff' }}
+                    formatter={(value: number) => [`${value}h`]}
+                  />
+                  <Legend />
+                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                  <Bar dataKey="ai" name="AI Time" stackId="hours" fill={TYPE_COLORS.develop} label={((props: any) => {
+                    const v = memberTimeData[props.index]?.ai;
+                    if (!v) return null;
+                    return <text x={props.x + props.width / 2} y={props.y + props.height / 2} fill="#fff" fontSize={11} textAnchor="middle" dominantBaseline="middle">{`AI(${v}h)`}</text>;
+                  }) as any} />
+                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                  <Bar dataKey="meeting" name="Meeting" stackId="hours" fill={TYPE_COLORS.meeting} label={((props: any) => {
+                    const v = memberTimeData[props.index]?.meeting;
+                    if (!v) return null;
+                    return <text x={props.x + props.width / 2} y={props.y + props.height / 2} fill="#fff" fontSize={11} textAnchor="middle" dominantBaseline="middle">{`Meet(${v}h)`}</text>;
+                  }) as any} />
+                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                  <Bar dataKey="chore" name="Chore" stackId="hours" fill={TYPE_COLORS.chore} radius={[0, 4, 4, 0]} label={((props: any) => {
+                    const v = memberTimeData[props.index]?.chore;
+                    if (!v) return null;
+                    return <text x={props.x + props.width / 2} y={props.y + props.height / 2} fill="#fff" fontSize={11} textAnchor="middle" dominantBaseline="middle">{`Chore(${v}h)`}</text>;
+                  }) as any} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <ResponsiveContainer width="100%" height={Math.max(300, team.developers.length * 50)}>
+                <BarChart data={memberCommitData} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                  <XAxis type="number" stroke="#888" />
+                  <YAxis dataKey="name" type="category" stroke="#888" width={100} />
+                  <Tooltip
+                    contentStyle={{
+                      background: '#1a1a2e',
+                      border: '1px solid #333',
+                      borderRadius: '4px',
+                      color: '#fff',
+                    }}
+                    itemStyle={{ color: '#fff' }}
+                    labelStyle={{ color: '#fff' }}
+                  />
+                  <Legend />
+                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                  <Bar dataKey="develop" name="Develop" stackId="commits" fill={TYPE_COLORS.develop} label={((props: any) => {
+                    const v = memberCommitData[props.index]?.develop;
+                    if (!v) return null;
+                    return <text x={props.x + props.width / 2} y={props.y + props.height / 2} fill="#fff" fontSize={11} textAnchor="middle" dominantBaseline="middle">{`Dev(${v})`}</text>;
+                  }) as any} />
+                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                  <Bar dataKey="meeting" name="Meeting" stackId="commits" fill={TYPE_COLORS.meeting} label={((props: any) => {
+                    const v = memberCommitData[props.index]?.meeting;
+                    if (!v) return null;
+                    return <text x={props.x + props.width / 2} y={props.y + props.height / 2} fill="#fff" fontSize={11} textAnchor="middle" dominantBaseline="middle">{`Meet(${v})`}</text>;
+                  }) as any} />
+                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                  <Bar dataKey="chore" name="Chore" stackId="commits" fill={TYPE_COLORS.chore} radius={[0, 4, 4, 0]} label={((props: any) => {
+                    const v = memberCommitData[props.index]?.chore;
+                    if (!v) return null;
+                    return <text x={props.x + props.width / 2} y={props.y + props.height / 2} fill="#fff" fontSize={11} textAnchor="middle" dominantBaseline="middle">{`Chore(${v})`}</text>;
+                  }) as any} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
           </div>
         </div>
 

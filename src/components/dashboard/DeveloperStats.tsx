@@ -41,19 +41,22 @@ export function DeveloperStats({
 }: DeveloperStatsProps) {
   const [expandedDevs, setExpandedDevs] = useState<Set<string>>(new Set());
   const [sortKey, setSortKey] = useState<string | null>(null);
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc' | null>(null);
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc" | null>(
+    null,
+  );
+  const [isCommitChartHovered, setIsCommitChartHovered] = useState(false);
 
   const handleSort = (key: string) => {
     if (sortKey === key) {
-      if (sortDirection === 'asc') {
-        setSortDirection('desc');
-      } else if (sortDirection === 'desc') {
+      if (sortDirection === "asc") {
+        setSortDirection("desc");
+      } else if (sortDirection === "desc") {
         setSortKey(null);
         setSortDirection(null);
       }
     } else {
       setSortKey(key);
-      setSortDirection('asc');
+      setSortDirection("asc");
     }
   };
 
@@ -113,6 +116,14 @@ export function DeveloperStats({
     develop: s.commitsByType.develop,
     meeting: s.commitsByType.meeting,
     chore: s.commitsByType.chore,
+  }));
+
+  // Developer time data for hover chart (AI, Meeting, Chore hours)
+  const developerTimeData = sortedByCommits.map((s) => ({
+    name: s.developer.name,
+    ai: parseFloat((s.aiDrivenMinutesByType.develop / 60).toFixed(1)),
+    meeting: parseFloat(s.workHoursByType.meeting.toFixed(1)),
+    chore: parseFloat(s.workHoursByType.chore.toFixed(1)),
   }));
 
   const workHoursData = sortedByCommits.map((s) => ({
@@ -203,33 +214,72 @@ export function DeveloperStats({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const renderWorkHoursTooltip = ({ active, payload, label }: any) => {
     if (!active || !payload?.length) return null;
-    const humanKeys = ['develop', 'meeting', 'chore'];
-    const aiKeys = ['aiDriven', 'aiMeeting', 'aiChore'];
-    const humanItems = payload.filter((p: any) => humanKeys.includes(p.dataKey));
+    const humanKeys = ["develop", "meeting", "chore"];
+    const aiKeys = ["aiDriven", "aiMeeting", "aiChore"];
+    const humanItems = payload.filter((p: any) =>
+      humanKeys.includes(p.dataKey),
+    );
     const aiItems = payload.filter((p: any) => aiKeys.includes(p.dataKey));
-    const humanTotal = humanItems.reduce((sum: number, p: any) => sum + (p.value || 0), 0);
-    const aiTotal = aiItems.reduce((sum: number, p: any) => sum + (p.value || 0), 0);
+    const humanTotal = humanItems.reduce(
+      (sum: number, p: any) => sum + (p.value || 0),
+      0,
+    );
+    const aiTotal = aiItems.reduce(
+      (sum: number, p: any) => sum + (p.value || 0),
+      0,
+    );
     return (
-      <div style={{ background: '#1a1a2e', border: '1px solid #333', borderRadius: '4px', padding: '0.5rem 0.75rem', color: '#fff', fontSize: '0.85rem' }}>
-        <p style={{ margin: '0 0 0.4rem', fontWeight: 600 }}>{label}</p>
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
+      <div
+        style={{
+          background: "#1a1a2e",
+          border: "1px solid #333",
+          borderRadius: "4px",
+          padding: "0.5rem 0.75rem",
+          color: "#fff",
+          fontSize: "0.85rem",
+        }}
+      >
+        <p style={{ margin: "0 0 0.4rem", fontWeight: 600 }}>{label}</p>
+        <div style={{ display: "flex", gap: "0.75rem" }}>
           <div>
             {humanItems.map((p: any) => (
-              <p key={p.dataKey} style={{ margin: '0.15rem 0', color: p.color }}>
+              <p
+                key={p.dataKey}
+                style={{ margin: "0.15rem 0", color: p.color }}
+              >
                 {p.name}: {p.value}h
               </p>
             ))}
-            <p style={{ margin: '0.25rem 0 0', borderTop: '1px solid #444', paddingTop: '0.25rem', fontWeight: 600, color: '#fff' }}>
+            <p
+              style={{
+                margin: "0.25rem 0 0",
+                borderTop: "1px solid #444",
+                paddingTop: "0.25rem",
+                fontWeight: 600,
+                color: "#fff",
+              }}
+            >
               Work: {parseFloat(humanTotal.toFixed(1))}h
             </p>
           </div>
-          <div style={{ borderLeft: '1px solid #444', paddingLeft: '0.75rem' }}>
+          <div style={{ borderLeft: "1px solid #444", paddingLeft: "0.75rem" }}>
             {aiItems.map((p: any) => (
-              <p key={p.dataKey} style={{ margin: '0.15rem 0', color: p.color }}>
+              <p
+                key={p.dataKey}
+                style={{ margin: "0.15rem 0", color: p.color }}
+              >
                 {p.name}: {p.value}h
               </p>
             ))}
-            <p style={{ margin: '0.25rem 0 0', borderTop: '1px solid #444', paddingTop: '0.25rem', fontWeight: 600, color: '#fff' }}>
+            <p
+              style={{
+                margin: "0.25rem 0 0",
+                borderTop: "1px solid #444",
+                paddingTop: "0.25rem",
+                fontWeight: 600,
+                color: "#fff",
+              }}
+            >
               AI: {parseFloat(aiTotal.toFixed(1))}h
             </p>
           </div>
@@ -354,34 +404,45 @@ export function DeveloperStats({
     const getVal = (s: DeveloperStatsType): number | string => {
       const devId = s.developer.id;
       switch (sortKey) {
-        case 'name': return s.developer.name;
-        case 'team': return (teamMap.get(devId) || []).join(',');
-        case 'commits': return s.totalCommits;
-        case 'develop': return s.commitsByType.develop;
-        case 'meeting': return s.commitsByType.meeting;
-        case 'chore': return s.commitsByType.chore;
-        case 'avgScore': return s.avgEvaluationDevelop;
-        case 'lines': {
+        case "name":
+          return s.developer.name;
+        case "team":
+          return (teamMap.get(devId) || []).join(",");
+        case "commits":
+          return s.totalCommits;
+        case "develop":
+          return s.commitsByType.develop;
+        case "meeting":
+          return s.commitsByType.meeting;
+        case "chore":
+          return s.commitsByType.chore;
+        case "avgScore":
+          return s.avgEvaluationDevelop;
+        case "lines": {
           const l = developLinesMap.devMap.get(devId);
           return l ? l.added + l.deleted : 0;
         }
-        case 'workHours': return s.totalWorkHours;
-        case 'aiMinutes': return s.aiDrivenMinutesByType.develop;
-        case 'productivity': {
+        case "workHours":
+          return s.totalWorkHours;
+        case "aiMinutes":
+          return s.aiDrivenMinutesByType.develop;
+        case "productivity": {
           const wh = s.workHoursByType.develop;
           const ai = s.aiDrivenMinutesByType.develop;
           return wh > 0 && ai > 0 ? ((wh * 60) / ai) * 100 : 0;
         }
-        default: return 0;
+        default:
+          return 0;
       }
     };
     return [...stats].sort((a, b) => {
       const va = getVal(a);
       const vb = getVal(b);
-      const cmp = typeof va === 'string' && typeof vb === 'string'
-        ? va.localeCompare(vb)
-        : (va as number) - (vb as number);
-      return sortDirection === 'asc' ? cmp : -cmp;
+      const cmp =
+        typeof va === "string" && typeof vb === "string"
+          ? va.localeCompare(vb)
+          : (va as number) - (vb as number);
+      return sortDirection === "asc" ? cmp : -cmp;
     });
   }, [stats, sortKey, sortDirection, teamMap, developLinesMap]);
 
@@ -435,8 +496,12 @@ export function DeveloperStats({
             </span>
           </span>
           <div className={styles.statHoverTip}>
-            <span style={{ color: "#888", fontSize: "0.75rem" }}>Daily Avg ({dayCount}days)</span>
-            <span style={{ fontSize: "1.5rem", fontWeight: 600, color: "#6366f1" }}>
+            <span style={{ color: "#888", fontSize: "0.75rem" }}>
+              Daily Avg ({dayCount}days)
+            </span>
+            <span
+              style={{ fontSize: "1.5rem", fontWeight: 600, color: "#6366f1" }}
+            >
               {(totalWorkHours / dayCount).toFixed(1)}h
             </span>
           </div>
@@ -465,9 +530,19 @@ export function DeveloperStats({
             </span>
           </span>
           <div className={styles.statHoverTip}>
-            <span style={{ color: "#888", fontSize: "0.75rem" }}>Daily Avg ({dayCount}days)</span>
-            <span style={{ fontSize: "1.5rem", fontWeight: 600, color: "#6366f1" }}>
-              {((totalDevelopAiMinutes / 60 + totalMeetingWorkHours + totalChoreWorkHours) / dayCount).toFixed(1)}h
+            <span style={{ color: "#888", fontSize: "0.75rem" }}>
+              Daily Avg ({dayCount}days)
+            </span>
+            <span
+              style={{ fontSize: "1.5rem", fontWeight: 600, color: "#6366f1" }}
+            >
+              {(
+                (totalDevelopAiMinutes / 60 +
+                  totalMeetingWorkHours +
+                  totalChoreWorkHours) /
+                dayCount
+              ).toFixed(1)}
+              h
             </span>
           </div>
         </div>
@@ -532,46 +607,192 @@ export function DeveloperStats({
           </ResponsiveContainer>
         </div>
 
-        <div className={styles.chartCard}>
-          <h3 className={styles.chartTitle}>Commits by Developer</h3>
-          <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={commitData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-              <XAxis
-                dataKey="name"
-                type="category"
-                stroke="#888"
-                interval={0}
-              />
-              <YAxis type="number" stroke="#888" />
-              <Tooltip content={renderStackedTooltip("")} />
-              <Legend />
-              <Bar
-                dataKey="develop"
-                name="Develop"
-                stackId="commits"
-                fill={TYPE_COLORS.develop}
-              />
-              <Bar
-                dataKey="meeting"
-                name="Meeting"
-                stackId="commits"
-                fill={TYPE_COLORS.meeting}
-              />
-              <Bar
-                dataKey="chore"
-                name="Chore"
-                stackId="commits"
-                fill={TYPE_COLORS.chore}
-                radius={[4, 4, 0, 0]}
-              />
-            </BarChart>
-          </ResponsiveContainer>
+        <div
+          className={styles.chartCard}
+          onMouseEnter={() => setIsCommitChartHovered(true)}
+          onMouseLeave={() => setIsCommitChartHovered(false)}
+        >
+          <h3 className={styles.chartTitle}>
+            {isCommitChartHovered
+              ? "Hours by Developer (AI / Meeting / Chore)"
+              : "Commits by Developer"}
+          </h3>
+          {isCommitChartHovered ? (
+            <ResponsiveContainer width="100%" height={350}>
+              <BarChart data={developerTimeData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                <XAxis
+                  dataKey="name"
+                  type="category"
+                  stroke="#888"
+                  interval={0}
+                />
+                <YAxis type="number" stroke="#888" unit="h" />
+                <Tooltip content={renderStackedTooltip("h")} />
+                <Legend />
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                <Bar
+                  dataKey="ai"
+                  name="AI Time"
+                  stackId="hours"
+                  fill={TYPE_COLORS.develop}
+                  label={
+                    ((props: any) => {
+                      const v = developerTimeData[props.index]?.ai;
+                      if (!v) return null;
+                      return (
+                        <text
+                          x={props.x + props.width / 2}
+                          y={props.y + props.height / 2}
+                          fill="#fff"
+                          fontSize={10}
+                          textAnchor="middle"
+                          dominantBaseline="middle"
+                        >{`AI(${v}h)`}</text>
+                      );
+                    }) as any
+                  }
+                />
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                <Bar
+                  dataKey="meeting"
+                  name="Meeting"
+                  stackId="hours"
+                  fill={TYPE_COLORS.meeting}
+                  label={
+                    ((props: any) => {
+                      const v = developerTimeData[props.index]?.meeting;
+                      if (!v) return null;
+                      return (
+                        <text
+                          x={props.x + props.width / 2}
+                          y={props.y + props.height / 2}
+                          fill="#fff"
+                          fontSize={10}
+                          textAnchor="middle"
+                          dominantBaseline="middle"
+                        >{`Meet(${v}h)`}</text>
+                      );
+                    }) as any
+                  }
+                />
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                <Bar
+                  dataKey="chore"
+                  name="Chore"
+                  stackId="hours"
+                  fill={TYPE_COLORS.chore}
+                  radius={[4, 4, 0, 0]}
+                  label={
+                    ((props: any) => {
+                      const v = developerTimeData[props.index]?.chore;
+                      if (!v) return null;
+                      return (
+                        <text
+                          x={props.x + props.width / 2}
+                          y={props.y + props.height / 2}
+                          fill="#fff"
+                          fontSize={10}
+                          textAnchor="middle"
+                          dominantBaseline="middle"
+                        >{`Chore(${v}h)`}</text>
+                      );
+                    }) as any
+                  }
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <ResponsiveContainer width="100%" height={350}>
+              <BarChart data={commitData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                <XAxis
+                  dataKey="name"
+                  type="category"
+                  stroke="#888"
+                  interval={0}
+                />
+                <YAxis type="number" stroke="#888" />
+                <Tooltip content={renderStackedTooltip("")} />
+                <Legend />
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                <Bar
+                  dataKey="develop"
+                  name="Develop"
+                  stackId="commits"
+                  fill={TYPE_COLORS.develop}
+                  label={
+                    ((props: any) => {
+                      const v = commitData[props.index]?.develop;
+                      if (!v) return null;
+                      return (
+                        <text
+                          x={props.x + props.width / 2}
+                          y={props.y + props.height / 2}
+                          fill="#fff"
+                          fontSize={10}
+                          textAnchor="middle"
+                          dominantBaseline="middle"
+                        >{`Dev(${v})`}</text>
+                      );
+                    }) as any
+                  }
+                />
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                <Bar
+                  dataKey="meeting"
+                  name="Meeting"
+                  stackId="commits"
+                  fill={TYPE_COLORS.meeting}
+                  label={
+                    ((props: any) => {
+                      const v = commitData[props.index]?.meeting;
+                      if (!v) return null;
+                      return (
+                        <text
+                          x={props.x + props.width / 2}
+                          y={props.y + props.height / 2}
+                          fill="#fff"
+                          fontSize={10}
+                          textAnchor="middle"
+                          dominantBaseline="middle"
+                        >{`Meet(${v})`}</text>
+                      );
+                    }) as any
+                  }
+                />
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                <Bar
+                  dataKey="chore"
+                  name="Chore"
+                  stackId="commits"
+                  fill={TYPE_COLORS.chore}
+                  radius={[4, 4, 0, 0]}
+                  label={
+                    ((props: any) => {
+                      const v = commitData[props.index]?.chore;
+                      if (!v) return null;
+                      return (
+                        <text
+                          x={props.x + props.width / 2}
+                          y={props.y + props.height / 2}
+                          fill="#fff"
+                          fontSize={10}
+                          textAnchor="middle"
+                          dominantBaseline="middle"
+                        >{`Chore(${v})`}</text>
+                      );
+                    }) as any
+                  }
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
         </div>
 
         <div className={styles.chartCard}>
           <h3 className={styles.chartTitle}>Work Hours by Developer</h3>
-          <ResponsiveContainer width="100%" height={250}>
+          <ResponsiveContainer width="100%" height={350}>
             <BarChart data={workHoursData} barCategoryGap="20%">
               <CartesianGrid strokeDasharray="3 3" stroke="#333" />
               <XAxis
@@ -583,12 +804,46 @@ export function DeveloperStats({
               <YAxis type="number" stroke="#888" unit="h" />
               <Tooltip content={renderWorkHoursTooltip} />
               <Legend />
-              <Bar dataKey="develop" name="Develop" stackId="h" fill={TYPE_COLORS.develop} />
-              <Bar dataKey="meeting" name="Meeting" stackId="h" fill={TYPE_COLORS.meeting} />
-              <Bar dataKey="chore" name="Chore" stackId="h" fill={TYPE_COLORS.chore} radius={[4, 4, 0, 0]} />
-              <Bar dataKey="aiDriven" name="AI Driven" stackId="ai" fill="#ef4444" />
-              <Bar dataKey="aiMeeting" name="Meeting" stackId="ai" fill={TYPE_COLORS.meeting} legendType="none" />
-              <Bar dataKey="aiChore" name="Chore" stackId="ai" fill={TYPE_COLORS.chore} legendType="none" radius={[4, 4, 0, 0]} />
+              <Bar
+                dataKey="develop"
+                name="Develop"
+                stackId="h"
+                fill={TYPE_COLORS.develop}
+              />
+              <Bar
+                dataKey="meeting"
+                name="Meeting"
+                stackId="h"
+                fill={TYPE_COLORS.meeting}
+              />
+              <Bar
+                dataKey="chore"
+                name="Chore"
+                stackId="h"
+                fill={TYPE_COLORS.chore}
+                radius={[4, 4, 0, 0]}
+              />
+              <Bar
+                dataKey="aiDriven"
+                name="AI Driven"
+                stackId="ai"
+                fill="#ef4444"
+              />
+              <Bar
+                dataKey="aiMeeting"
+                name="Meeting"
+                stackId="ai"
+                fill={TYPE_COLORS.meeting}
+                legendType="none"
+              />
+              <Bar
+                dataKey="aiChore"
+                name="Chore"
+                stackId="ai"
+                fill={TYPE_COLORS.chore}
+                legendType="none"
+                radius={[4, 4, 0, 0]}
+              />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -772,17 +1027,17 @@ export function DeveloperStats({
             <thead>
               <tr>
                 {[
-                  { key: 'name', label: 'Name' },
-                  { key: 'team', label: 'Team' },
-                  { key: 'commits', label: 'Commits' },
-                  { key: 'develop', label: 'Develop' },
-                  { key: 'meeting', label: 'Meeting' },
-                  { key: 'chore', label: 'Chore' },
-                  { key: 'avgScore', label: 'Avg Score' },
-                  { key: 'lines', label: 'Lines' },
-                  { key: 'workHours', label: 'Work Hours' },
-                  { key: 'aiMinutes', label: 'AI Minutes' },
-                  { key: 'productivity', label: 'Productivity' },
+                  { key: "name", label: "Name" },
+                  { key: "team", label: "Team" },
+                  { key: "commits", label: "Commits" },
+                  { key: "develop", label: "Develop" },
+                  { key: "meeting", label: "Meeting" },
+                  { key: "chore", label: "Chore" },
+                  { key: "avgScore", label: "Avg Score" },
+                  { key: "lines", label: "Lines" },
+                  { key: "workHours", label: "Work Hours" },
+                  { key: "aiMinutes", label: "AI Minutes" },
+                  { key: "productivity", label: "Productivity" },
                 ].map((col) => (
                   <th
                     key={col.key}
@@ -791,7 +1046,11 @@ export function DeveloperStats({
                   >
                     {col.label}
                     <span className={styles.sortIndicator}>
-                      {sortKey === col.key ? (sortDirection === 'asc' ? ' ▲' : ' ▼') : ''}
+                      {sortKey === col.key
+                        ? sortDirection === "asc"
+                          ? " ▲"
+                          : " ▼"
+                        : ""}
                     </span>
                   </th>
                 ))}
