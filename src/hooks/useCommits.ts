@@ -211,11 +211,16 @@ export function useCommits(): UseCommitsReturn {
       });
 
       const totalCommits = teamCommits.length;
+      const developCommits = teamCommits.filter((c) => c.type === 'develop' || c.type === null);
+      const commitsByType = {
+        develop: developCommits.length,
+        meeting: teamCommits.filter((c) => c.type === 'meeting').length,
+        chore: teamCommits.filter((c) => c.type === 'chore').length,
+      };
+
       const avgEvaluation = totalCommits > 0
         ? teamCommits.reduce((sum, c) => sum + (c.evaluation_total || 0), 0) / totalCommits
         : 0;
-
-      const developCommits = teamCommits.filter((c) => c.type === 'develop' || c.type === null);
       const avgEvaluationDevelop = developCommits.length > 0
         ? developCommits.reduce((sum, c) => sum + (c.evaluation_total || 0), 0) / developCommits.length
         : 0;
@@ -239,6 +244,7 @@ export function useCommits(): UseCommitsReturn {
         team,
         developers: teamDevs,
         totalCommits,
+        commitsByType,
         avgEvaluation,
         avgEvaluationDevelop,
         totalWorkHours,
@@ -254,9 +260,16 @@ export function useCommits(): UseCommitsReturn {
     const avgEvaluation = totalCommits > 0
       ? commits.reduce((sum, c) => sum + (c.evaluation_total || 0), 0) / totalCommits
       : 0;
-    const avgProductivity = totalCommits > 0
-      ? commits.reduce((sum, c) => sum + (c.productivity || 0), 0) / totalCommits
+    const developCommits = commits.filter((c) => c.type === 'develop' || c.type === null);
+    const avgEvaluationDevelop = developCommits.length > 0
+      ? developCommits.reduce((sum, c) => sum + (c.evaluation_total || 0), 0) / developCommits.length
       : 0;
+    const developWorkHours = developCommits.reduce((sum, c) => sum + (c.work_hours || 0), 0);
+    const developAiMinutes = developCommits.reduce((sum, c) => sum + (c.ai_driven_minutes || 0), 0);
+    const avgProductivity =
+      developWorkHours > 0 && developAiMinutes > 0
+        ? ((developWorkHours * 60) / developAiMinutes) * 100
+        : 0;
     const totalWorkHours = commits.reduce(
       (sum, c) => sum + (c.work_hours || 0),
       0
@@ -266,11 +279,19 @@ export function useCommits(): UseCommitsReturn {
       0
     );
 
+    const commitsByType = {
+      develop: developCommits.length,
+      meeting: commits.filter((c) => c.type === 'meeting').length,
+      chore: commits.filter((c) => c.type === 'chore').length,
+    };
+
     return {
       totalTeams: teams.length,
       totalDevelopers: developers.length,
       totalCommits,
+      commitsByType,
       avgEvaluation,
+      avgEvaluationDevelop,
       avgProductivity,
       totalWorkHours,
       totalAiDrivenMinutes,

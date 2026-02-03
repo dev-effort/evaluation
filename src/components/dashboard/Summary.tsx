@@ -9,10 +9,11 @@ import {
   PieChart,
   Pie,
   Cell,
-} from 'recharts';
-import type { DashboardSummary, TeamStats } from '@/types';
-import { DateFilter } from './DateFilter';
-import styles from './Summary.module.css';
+  Legend,
+} from "recharts";
+import type { DashboardSummary, TeamStats } from "@/types";
+import { DateFilter } from "./DateFilter";
+import styles from "./Summary.module.css";
 
 interface SummaryProps {
   summary: DashboardSummary;
@@ -21,13 +22,71 @@ interface SummaryProps {
   onDateRangeChange: (startDate: string, endDate: string) => void;
 }
 
-const COLORS = ['#6366f1', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
+const COLORS = [
+  "#6366f1",
+  "#22c55e",
+  "#f59e0b",
+  "#ef4444",
+  "#8b5cf6",
+  "#06b6d4",
+];
 
-export function Summary({ summary, teamStats, dateRange, onDateRangeChange }: SummaryProps) {
+const TYPE_COLORS = {
+  develop: "#6366f1",
+  meeting: "#22c55e",
+  chore: "#f59e0b",
+};
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const renderStackedTooltip = ({ active, payload, label }: any) => {
+  if (!active || !payload?.length) return null;
+  const total = payload.reduce(
+    (sum: number, p: any) => sum + (p.value || 0),
+    0,
+  );
+  return (
+    <div
+      style={{
+        background: "#1a1a2e",
+        border: "1px solid #333",
+        borderRadius: "4px",
+        padding: "0.5rem 0.75rem",
+        color: "#fff",
+        fontSize: "0.85rem",
+      }}
+    >
+      <p style={{ margin: "0 0 0.25rem", fontWeight: 600 }}>{label}</p>
+      {payload.map((p: any) => (
+        <p key={p.name} style={{ margin: "0.15rem 0", color: p.color }}>
+          {p.name}: {p.value}
+        </p>
+      ))}
+      <p
+        style={{
+          margin: "0.25rem 0 0",
+          borderTop: "1px solid #444",
+          paddingTop: "0.25rem",
+          fontWeight: 600,
+          color: "#fff",
+        }}
+      >
+        Total: {total}
+      </p>
+    </div>
+  );
+};
+
+export function Summary({
+  summary,
+  teamStats,
+  dateRange,
+  onDateRangeChange,
+}: SummaryProps) {
   const teamCommitData = teamStats.map((ts) => ({
     name: ts.team.name,
-    commits: ts.totalCommits,
-    avgScore: ts.avgEvaluation.toFixed(1),
+    develop: ts.commitsByType.develop,
+    meeting: ts.commitsByType.meeting,
+    chore: ts.commitsByType.chore,
   }));
 
   const teamDistribution = teamStats.map((ts) => ({
@@ -47,32 +106,39 @@ export function Summary({ summary, teamStats, dateRange, onDateRangeChange }: Su
 
       <div className={styles.statsGrid}>
         <div className={styles.statCard}>
-          <span className={styles.statValue}>{summary.totalTeams}</span>
           <span className={styles.statLabel}>Teams</span>
+          <span className={styles.statValue}>{summary.totalTeams}</span>
         </div>
         <div className={styles.statCard}>
-          <span className={styles.statValue}>{summary.totalDevelopers}</span>
           <span className={styles.statLabel}>Developers</span>
+          <span className={styles.statValue}>{summary.totalDevelopers}</span>
         </div>
         <div className={styles.statCard}>
+          <span className={styles.statLabel}>Total Commits</span>
           <span className={styles.statValue}>{summary.totalCommits}</span>
-          <span className={styles.statLabel}>Commits</span>
+          <span className={styles.statSub}>
+            <span style={{ color: "#6366f1" }}>Dev {summary.commitsByType.develop}</span>
+            {" / "}
+            <span style={{ color: "#22c55e" }}>Meet {summary.commitsByType.meeting}</span>
+            {" / "}
+            <span style={{ color: "#f59e0b" }}>Chore {summary.commitsByType.chore}</span>
+          </span>
         </div>
         <div className={styles.statCard}>
-          <span className={styles.statValue}>{summary.avgEvaluation.toFixed(1)}</span>
           <span className={styles.statLabel}>Avg Score</span>
+          <span className={styles.statValue}>
+            {summary.avgEvaluationDevelop.toFixed(1)}
+          </span>
         </div>
         <div className={styles.statCard}>
-          <span className={styles.statValue}>{summary.avgProductivity.toFixed(0)}%</span>
           <span className={styles.statLabel}>Avg Productivity</span>
-        </div>
-        <div className={styles.statCard}>
-          <span className={styles.statValue}>{summary.totalWorkHours.toFixed(1)}h</span>
-          <span className={styles.statLabel}>Total Work Hours</span>
+          <span className={styles.statValue}>
+            {summary.avgProductivity.toFixed(0)}%
+          </span>
         </div>
       </div>
 
-      <div className={styles.chartsGrid}>
+      <div className={styles.chartsColumn}>
         <div className={styles.chartCard}>
           <h3 className={styles.chartTitle}>Commits by Team</h3>
           <div className={styles.chartContainer}>
@@ -81,15 +147,27 @@ export function Summary({ summary, teamStats, dateRange, onDateRangeChange }: Su
                 <CartesianGrid strokeDasharray="3 3" stroke="#333" />
                 <XAxis dataKey="name" stroke="#888" />
                 <YAxis stroke="#888" />
-                <Tooltip
-                  contentStyle={{
-                    background: '#1a1a2e',
-                    border: '1px solid #333',
-                    borderRadius: '4px',
-                    color: '#fff',
-                  }}
+                <Tooltip content={renderStackedTooltip} />
+                <Legend />
+                <Bar
+                  dataKey="develop"
+                  name="Develop"
+                  stackId="commits"
+                  fill={TYPE_COLORS.develop}
                 />
-                <Bar dataKey="commits" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                <Bar
+                  dataKey="meeting"
+                  name="Meeting"
+                  stackId="commits"
+                  fill={TYPE_COLORS.meeting}
+                />
+                <Bar
+                  dataKey="chore"
+                  name="Chore"
+                  stackId="commits"
+                  fill={TYPE_COLORS.chore}
+                  radius={[4, 4, 0, 0]}
+                />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -120,10 +198,10 @@ export function Summary({ summary, teamStats, dateRange, onDateRangeChange }: Su
                 </Pie>
                 <Tooltip
                   contentStyle={{
-                    background: '#1a1a2e',
-                    border: '1px solid #333',
-                    borderRadius: '4px',
-                    color: '#fff',
+                    background: "#1a1a2e",
+                    border: "1px solid #333",
+                    borderRadius: "4px",
+                    color: "#fff",
                   }}
                 />
               </PieChart>
