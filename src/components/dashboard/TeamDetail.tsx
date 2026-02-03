@@ -70,6 +70,17 @@ export function TeamDetail({
     }));
   }, [commits, teamMemberIds]);
 
+  // Calculate day count for daily averages
+  const dayCount = useMemo(() => {
+    const teamCommits = commits.filter((c) => teamMemberIds.includes(c.developer_id || ''));
+    const dates = new Set<string>();
+    teamCommits.forEach((c) => {
+      const d = new Date(c.created_at);
+      dates.add(`${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`);
+    });
+    return dates.size || 1;
+  }, [commits, teamMemberIds]);
+
   if (!team) {
     return (
       <div className={styles.container}>
@@ -80,17 +91,6 @@ export function TeamDetail({
       </div>
     );
   }
-
-  const totalScore = team.avgEvaluation * team.totalCommits;
-  const totalAiMinutes = team.totalAiDrivenMinutes;
-  const totalLinesAdded = team.developers.reduce(
-    (sum, d) => sum + d.totalLinesAdded,
-    0
-  );
-  const totalLinesDeleted = team.developers.reduce(
-    (sum, d) => sum + d.totalLinesDeleted,
-    0
-  );
 
   // Type-based stats for the team
   const teamTypeStats = team.developers.reduce(
@@ -111,6 +111,28 @@ export function TeamDetail({
       return acc;
     },
     { develop: 0, meeting: 0, chore: 0 }
+  );
+
+  // Calculations matching DeveloperDetail.tsx
+  const totalWorkHours = team.totalWorkHours;
+  const devWorkHours = teamWorkHoursByType.develop;
+  const meetWorkHours = teamWorkHoursByType.meeting;
+  const choreWorkHours = teamWorkHoursByType.chore;
+  const devAiMinutes = team.aiDrivenMinutesByType.develop;
+  const aiWithHumanHours = devAiMinutes / 60 + meetWorkHours + choreWorkHours;
+  const productivity =
+    devWorkHours > 0 && devAiMinutes > 0
+      ? ((devWorkHours * 60) / devAiMinutes) * 100
+      : 0;
+
+  // Lines from develop commits only
+  const developLinesAdded = team.developers.reduce(
+    (sum, d) => sum + d.totalLinesAdded,
+    0
+  );
+  const developLinesDeleted = team.developers.reduce(
+    (sum, d) => sum + d.totalLinesDeleted,
+    0
   );
 
   const TYPE_COLORS = {
@@ -178,36 +200,93 @@ export function TeamDetail({
 
       <div className={styles.statsGrid}>
         <div className={styles.statCard}>
-          <span className={styles.statValue}>{team.totalCommits}</span>
           <span className={styles.statLabel}>Total Commits</span>
-        </div>
-        <div className={styles.statCard}>
-          <span className={styles.statValue}>{totalScore.toFixed(0)}</span>
-          <span className={styles.statLabel}>Total Score</span>
-        </div>
-        <div className={styles.statCard}>
-          <span className={styles.statValue}>{team.avgEvaluationDevelop.toFixed(1)}</span>
-          <span className={styles.statLabel}>Avg Score</span>
-        </div>
-        <div className={styles.statCard}>
-          <span className={styles.statValue}>{team.totalWorkHours.toFixed(1)}h ({teamWorkHoursByType.develop.toFixed(1)}h)</span>
-          <span className={styles.statLabel}>Total Work Hours (Dev)</span>
-        </div>
-        <div className={styles.statCard}>
-          <span className={styles.statValue}>{(totalAiMinutes / 60).toFixed(1)}h</span>
-          <span className={styles.statLabel}>AI Driven Time</span>
-        </div>
-        <div className={styles.statCard}>
-          <span className={styles.statValue}>{teamWorkHoursByType.develop > 0 && team.aiDrivenMinutesByType.develop > 0 ? ((teamWorkHoursByType.develop * 60 / team.aiDrivenMinutesByType.develop) * 100).toFixed(0) : 0}%</span>
-          <span className={styles.statLabel}>Productivity</span>
-        </div>
-        <div className={styles.statCard}>
-          <span className={styles.statValue}>{totalLinesAdded + totalLinesDeleted}</span>
-          <span className={styles.statLabel}>Total Lines</span>
+          <span className={styles.statValue}>{team.totalCommits}</span>
           <span className={styles.statSub}>
-            <span style={{ color: '#22c55e' }}>+{totalLinesAdded}</span>
+            <span style={{ color: '#6366f1' }}>Dev {teamTypeStats.develop}</span>
             {' / '}
-            <span style={{ color: '#ef4444' }}>-{totalLinesDeleted}</span>
+            <span style={{ color: '#22c55e' }}>Meet {teamTypeStats.meeting}</span>
+            {' / '}
+            <span style={{ color: '#f59e0b' }}>Chore {teamTypeStats.chore}</span>
+          </span>
+        </div>
+        <div className={styles.statCard}>
+          <span className={styles.statLabel}>Avg Score</span>
+          <span className={styles.statValue}>{team.avgEvaluationDevelop.toFixed(1)}</span>
+          <span className={styles.statSub}>
+            <span style={{ color: '#a78bfa' }}>
+              Total {(team.avgEvaluationDevelop * teamTypeStats.develop).toFixed(0)}
+            </span>
+            {' / '}
+            <span style={{ color: '#6366f1' }}>Dev {teamTypeStats.develop}</span>
+          </span>
+        </div>
+        <div className={styles.statCard}>
+          <span className={styles.statLabel}>Human Work Hours</span>
+          <span className={styles.statValue}>{totalWorkHours.toFixed(1)}h</span>
+          <span className={styles.statSub}>
+            <span style={{ color: '#6366f1' }}>
+              Dev {devWorkHours.toFixed(1)}h
+            </span>
+            {' / '}
+            <span style={{ color: '#f59e0b' }}>
+              Chore {choreWorkHours.toFixed(1)}h
+            </span>
+            {' / '}
+            <span style={{ color: '#22c55e' }}>
+              Meet {meetWorkHours.toFixed(1)}h
+            </span>
+          </span>
+          <div className={styles.statHoverTip}>
+            <span style={{ color: '#888', fontSize: '0.75rem' }}>Daily Avg ({dayCount}days)</span>
+            <span style={{ fontSize: '1.5rem', fontWeight: 600, color: '#6366f1' }}>
+              {(totalWorkHours / dayCount).toFixed(1)}h
+            </span>
+          </div>
+        </div>
+        <div className={styles.statCard}>
+          <span className={styles.statLabel}>Human with AI Work Hours</span>
+          <span className={styles.statValue}>{aiWithHumanHours.toFixed(1)}h</span>
+          <span className={styles.statSub}>
+            <span style={{ color: '#ef4444' }}>
+              AI {(devAiMinutes / 60).toFixed(1)}h
+            </span>
+            {' / '}
+            <span style={{ color: '#f59e0b' }}>
+              Chore {choreWorkHours.toFixed(1)}h
+            </span>
+            {' / '}
+            <span style={{ color: '#22c55e' }}>
+              Meet {meetWorkHours.toFixed(1)}h
+            </span>
+          </span>
+          <div className={styles.statHoverTip}>
+            <span style={{ color: '#888', fontSize: '0.75rem' }}>Daily Avg ({dayCount}days)</span>
+            <span style={{ fontSize: '1.5rem', fontWeight: 600, color: '#6366f1' }}>
+              {(aiWithHumanHours / dayCount).toFixed(1)}h
+            </span>
+          </div>
+        </div>
+        <div className={styles.statCard}>
+          <span className={styles.statLabel}>Avg Productivity</span>
+          <span className={styles.statValue}>{productivity.toFixed(0)}%</span>
+          <span className={styles.statSub}>
+            <span style={{ color: '#6366f1' }}>
+              Dev {devWorkHours.toFixed(1)}h
+            </span>
+            {' / '}
+            <span style={{ color: '#ef4444' }}>
+              AI {(devAiMinutes / 60).toFixed(1)}h
+            </span>
+          </span>
+        </div>
+        <div className={styles.statCard}>
+          <span className={styles.statLabel}>Total Lines</span>
+          <span className={styles.statValue}>{developLinesAdded + developLinesDeleted}</span>
+          <span className={styles.statSub}>
+            <span style={{ color: '#22c55e' }}>+{developLinesAdded}</span>
+            {' / '}
+            <span style={{ color: '#ef4444' }}>-{developLinesDeleted}</span>
           </span>
         </div>
       </div>
@@ -232,15 +311,15 @@ export function TeamDetail({
               <span className={styles.typeStatLabel}>Avg Score</span>
             </div>
             <div className={styles.typeStatItem}>
-              <span className={styles.typeStatValue}>{teamWorkHoursByType.develop.toFixed(1)}h</span>
+              <span className={styles.typeStatValue}>{devWorkHours.toFixed(1)}h</span>
               <span className={styles.typeStatLabel}>Work Hours</span>
             </div>
             <div className={styles.typeStatItem}>
-              <span className={styles.typeStatValue}>{team.aiDrivenMinutesByType.develop}m</span>
+              <span className={styles.typeStatValue}>{(devAiMinutes / 60).toFixed(1)}h</span>
               <span className={styles.typeStatLabel}>AI Time</span>
             </div>
             <div className={styles.typeStatItem}>
-              <span className={styles.typeStatValue}>{teamWorkHoursByType.develop > 0 && team.aiDrivenMinutesByType.develop > 0 ? ((teamWorkHoursByType.develop * 60 / team.aiDrivenMinutesByType.develop) * 100).toFixed(0) : 0}%</span>
+              <span className={styles.typeStatValue}>{productivity.toFixed(0)}%</span>
               <span className={styles.typeStatLabel}>Productivity</span>
             </div>
           </div>
@@ -253,7 +332,7 @@ export function TeamDetail({
               <span className={styles.typeStatLabel}>Commits</span>
             </div>
             <div className={styles.typeStatItem}>
-              <span className={styles.typeStatValue}>{teamWorkHoursByType.meeting.toFixed(1)}h</span>
+              <span className={styles.typeStatValue}>{meetWorkHours.toFixed(1)}h</span>
               <span className={styles.typeStatLabel}>Work Hours</span>
             </div>
           </div>
@@ -266,7 +345,7 @@ export function TeamDetail({
               <span className={styles.typeStatLabel}>Commits</span>
             </div>
             <div className={styles.typeStatItem}>
-              <span className={styles.typeStatValue}>{teamWorkHoursByType.chore.toFixed(1)}h</span>
+              <span className={styles.typeStatValue}>{choreWorkHours.toFixed(1)}h</span>
               <span className={styles.typeStatLabel}>Work Hours</span>
             </div>
           </div>
