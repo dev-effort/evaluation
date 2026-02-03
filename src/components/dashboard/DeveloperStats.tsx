@@ -309,6 +309,13 @@ export function DeveloperStats({
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Avg Score</span>
           <span className={styles.statValue}>{avgScore.toFixed(1)}</span>
+          <span className={styles.statSub}>
+            <span style={{ color: "#a78bfa" }}>
+              Total {(avgScore * totalDevelop).toFixed(0)}
+            </span>
+            {" / "}
+            <span style={{ color: "#6366f1" }}>Dev {totalDevelop}</span>
+          </span>
         </div>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Human Work Hours</span>
@@ -330,7 +337,12 @@ export function DeveloperStats({
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Human with AI Work Hours</span>
           <span className={styles.statValue}>
-            {(totalDevelopAiMinutes / 60 + totalMeetingWorkHours + totalChoreWorkHours).toFixed(1)}h
+            {(
+              totalDevelopAiMinutes / 60 +
+              totalMeetingWorkHours +
+              totalChoreWorkHours
+            ).toFixed(1)}
+            h
           </span>
           <span className={styles.statSub}>
             <span style={{ color: "#ef4444" }}>
@@ -350,6 +362,15 @@ export function DeveloperStats({
           <span className={styles.statLabel}>Avg Productivity</span>
           <span className={styles.statValue}>
             {avgProductivity.toFixed(0)}%
+          </span>
+          <span className={styles.statSub}>
+            <span style={{ color: "#6366f1" }}>
+              Dev {totalDevelopWorkHours.toFixed(1)}h
+            </span>
+            {" / "}
+            <span style={{ color: "#ef4444" }}>
+              AI {(totalDevelopAiMinutes / 60).toFixed(1)}h
+            </span>
           </span>
         </div>
         <div className={styles.statCard}>
