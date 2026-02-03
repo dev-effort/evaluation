@@ -465,7 +465,8 @@ export function TeamDetail({
                   }}
                   itemStyle={{ color: '#fff' }}
                   labelStyle={{ color: '#fff' }}
-                  formatter={(value: number) => [`${value} commits`, 'Count'] as [string, string]}
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  formatter={((value: number) => [`${value} commits`, 'Count']) as any}
                 />
                 <Legend />
               </PieChart>
@@ -503,7 +504,8 @@ export function TeamDetail({
                     }}
                     itemStyle={{ color: '#fff' }}
                     labelStyle={{ color: '#fff' }}
-                    formatter={(value: number) => [`${value}h`, 'Hours'] as [string, string]}
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    formatter={((value: number) => [`${value}h`, 'Hours']) as any}
                   />
                   <Legend />
                 </PieChart>
