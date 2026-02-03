@@ -465,7 +465,7 @@ export function TeamDetail({
                   }}
                   itemStyle={{ color: '#fff' }}
                   labelStyle={{ color: '#fff' }}
-                  formatter={(value) => [`${value} commits`, 'Count']}
+                  formatter={(value: number) => [`${value} commits`, 'Count'] as [string, string]}
                 />
                 <Legend />
               </PieChart>
@@ -503,7 +503,7 @@ export function TeamDetail({
                     }}
                     itemStyle={{ color: '#fff' }}
                     labelStyle={{ color: '#fff' }}
-                    formatter={(value) => [`${value}h`, 'Hours']}
+                    formatter={(value: number) => [`${value}h`, 'Hours'] as [string, string]}
                   />
                   <Legend />
                 </PieChart>
