@@ -174,6 +174,15 @@ export function DeveloperDetail({
     });
   }, [developerCommits, filterTeam, filterType]);
 
+  const dayCount = useMemo(() => {
+    const dates = new Set<string>();
+    developerCommits.forEach((c) => {
+      const d = new Date(c.created_at);
+      dates.add(`${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`);
+    });
+    return dates.size || 1;
+  }, [developerCommits]);
+
   if (!developer) {
     return (
       <div className={styles.container}>
@@ -211,6 +220,21 @@ export function DeveloperDetail({
   const developLinesDeleted = developCommitsOnly.reduce(
     (sum, c) => sum + (c.lines_deleted || 0), 0,
   );
+
+  // Per-type breakdown for stat cards (matching DeveloperStats layout)
+  const devType = typeStats.find(s => s.type === 'develop')!;
+  const meetType = typeStats.find(s => s.type === 'meeting')!;
+  const choreType = typeStats.find(s => s.type === 'chore')!;
+  const totalWorkHours = developer.totalWorkHours;
+  const devWorkHours = devType.totalWorkHours;
+  const meetWorkHours = meetType.totalWorkHours;
+  const choreWorkHours = choreType.totalWorkHours;
+  const devAiMinutes = devType.totalAiMinutes;
+  const aiWithHumanHours = devAiMinutes / 60 + meetWorkHours + choreWorkHours;
+  const productivity =
+    devWorkHours > 0 && devAiMinutes > 0
+      ? ((devWorkHours * 60) / devAiMinutes) * 100
+      : 0;
 
   const radarData = [
     { subject: 'Complexity', value: developEvaluationBreakdown.complexity },
@@ -305,28 +329,89 @@ export function DeveloperDetail({
 
       <div className={styles.statsGrid}>
         <div className={styles.statCard}>
-          <span className={styles.statValue}>{developer.totalCommits}</span>
           <span className={styles.statLabel}>Total Commits</span>
+          <span className={styles.statValue}>{developer.totalCommits}</span>
+          <span className={styles.statSub}>
+            <span style={{ color: '#6366f1' }}>Dev {devType.count}</span>
+            {' / '}
+            <span style={{ color: '#22c55e' }}>Meet {meetType.count}</span>
+            {' / '}
+            <span style={{ color: '#f59e0b' }}>Chore {choreType.count}</span>
+          </span>
         </div>
         <div className={styles.statCard}>
-          <span className={styles.statValue}>{developer.avgEvaluation.toFixed(1)}</span>
           <span className={styles.statLabel}>Avg Score</span>
+          <span className={styles.statValue}>{devType.avgScore.toFixed(1)}</span>
+          <span className={styles.statSub}>
+            <span style={{ color: '#a78bfa' }}>
+              Total {(devType.avgScore * devType.count).toFixed(0)}
+            </span>
+            {' / '}
+            <span style={{ color: '#6366f1' }}>Dev {devType.count}</span>
+          </span>
         </div>
         <div className={styles.statCard}>
-          <span className={styles.statValue}>{developer.totalWorkHours.toFixed(1)}h</span>
-          <span className={styles.statLabel}>Total Work Hours</span>
+          <span className={styles.statLabel}>Human Work Hours</span>
+          <span className={styles.statValue}>{totalWorkHours.toFixed(1)}h</span>
+          <span className={styles.statSub}>
+            <span style={{ color: '#6366f1' }}>
+              Dev {devWorkHours.toFixed(1)}h
+            </span>
+            {' / '}
+            <span style={{ color: '#f59e0b' }}>
+              Chore {choreWorkHours.toFixed(1)}h
+            </span>
+            {' / '}
+            <span style={{ color: '#22c55e' }}>
+              Meet {meetWorkHours.toFixed(1)}h
+            </span>
+          </span>
+          <div className={styles.statHoverTip}>
+            <span style={{ color: '#888', fontSize: '0.75rem' }}>Daily Avg ({dayCount}days)</span>
+            <span style={{ fontSize: '1.5rem', fontWeight: 600, color: '#6366f1' }}>
+              {(totalWorkHours / dayCount).toFixed(1)}h
+            </span>
+          </div>
         </div>
         <div className={styles.statCard}>
-          <span className={styles.statValue}>{developer.totalAiDrivenMinutes}m</span>
-          <span className={styles.statLabel}>AI Driven Time</span>
+          <span className={styles.statLabel}>Human with AI Work Hours</span>
+          <span className={styles.statValue}>{aiWithHumanHours.toFixed(1)}h</span>
+          <span className={styles.statSub}>
+            <span style={{ color: '#ef4444' }}>
+              AI {(devAiMinutes / 60).toFixed(1)}h
+            </span>
+            {' / '}
+            <span style={{ color: '#f59e0b' }}>
+              Chore {choreWorkHours.toFixed(1)}h
+            </span>
+            {' / '}
+            <span style={{ color: '#22c55e' }}>
+              Meet {meetWorkHours.toFixed(1)}h
+            </span>
+          </span>
+          <div className={styles.statHoverTip}>
+            <span style={{ color: '#888', fontSize: '0.75rem' }}>Daily Avg ({dayCount}days)</span>
+            <span style={{ fontSize: '1.5rem', fontWeight: 600, color: '#6366f1' }}>
+              {(aiWithHumanHours / dayCount).toFixed(1)}h
+            </span>
+          </div>
         </div>
         <div className={styles.statCard}>
-          <span className={styles.statValue}>{developer.avgProductivity.toFixed(0)}%</span>
           <span className={styles.statLabel}>Avg Productivity</span>
+          <span className={styles.statValue}>{productivity.toFixed(0)}%</span>
+          <span className={styles.statSub}>
+            <span style={{ color: '#6366f1' }}>
+              Dev {devWorkHours.toFixed(1)}h
+            </span>
+            {' / '}
+            <span style={{ color: '#ef4444' }}>
+              AI {(devAiMinutes / 60).toFixed(1)}h
+            </span>
+          </span>
         </div>
         <div className={styles.statCard}>
-          <span className={styles.statValue}>{developLinesAdded + developLinesDeleted}</span>
           <span className={styles.statLabel}>Total Lines</span>
+          <span className={styles.statValue}>{developLinesAdded + developLinesDeleted}</span>
           <span className={styles.statSub}>
             <span style={{ color: '#22c55e' }}>+{developLinesAdded}</span>
             {' / '}
