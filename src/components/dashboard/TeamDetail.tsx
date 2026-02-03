@@ -8,11 +8,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  Radar,
   PieChart,
   Pie,
   Cell,
@@ -174,25 +169,6 @@ export function TeamDetail({
     { name: 'Meeting (Work Hours)', value: parseFloat(teamWorkHoursByType.meeting.toFixed(1)) },
     { name: 'Chore (Work Hours)', value: parseFloat(teamWorkHoursByType.chore.toFixed(1)) },
   ].filter((d) => d.value > 0);
-
-  const avgBreakdown = team.developers.reduce(
-    (acc, d) => {
-      acc.complexity += d.evaluationBreakdown.complexity;
-      acc.volume += d.evaluationBreakdown.volume;
-      acc.thinking += d.evaluationBreakdown.thinking;
-      acc.others += d.evaluationBreakdown.others;
-      return acc;
-    },
-    { complexity: 0, volume: 0, thinking: 0, others: 0 }
-  );
-
-  const memberCount = team.developers.length || 1;
-  const radarData = [
-    { subject: 'Complexity', value: avgBreakdown.complexity / memberCount },
-    { subject: 'Volume', value: avgBreakdown.volume / memberCount },
-    { subject: 'Thinking', value: avgBreakdown.thinking / memberCount },
-    { subject: 'Others', value: avgBreakdown.others / memberCount },
-  ];
 
   return (
     <div className={styles.container}>
@@ -448,26 +424,6 @@ export function TeamDetail({
                 </BarChart>
               </ResponsiveContainer>
             )}
-          </div>
-        </div>
-
-        <div className={styles.chartCard}>
-          <h3 className={styles.chartTitle}>Team Avg Evaluation Breakdown</h3>
-          <div className={styles.chartContainer}>
-            <ResponsiveContainer width="100%" height={300}>
-              <RadarChart data={radarData}>
-                <PolarGrid stroke="#333" />
-                <PolarAngleAxis dataKey="subject" stroke="#888" />
-                <PolarRadiusAxis stroke="#888" domain={[0, 4]} />
-                <Radar
-                  name="Score"
-                  dataKey="value"
-                  stroke="#6366f1"
-                  fill="#6366f1"
-                  fillOpacity={0.5}
-                />
-              </RadarChart>
-            </ResponsiveContainer>
           </div>
         </div>
 
