@@ -136,6 +136,25 @@ export function TeamDetail({
     chore: '#f59e0b',
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const renderStackedTooltip = (unit: string) => ({ active, payload, label }: any) => {
+    if (!active || !payload?.length) return null;
+    const total = payload.reduce((sum: number, p: any) => sum + (p.value || 0), 0);
+    return (
+      <div style={{ background: '#1a1a2e', border: '1px solid #333', borderRadius: '4px', padding: '0.5rem 0.75rem', color: '#fff', fontSize: '0.85rem' }}>
+        <p style={{ margin: '0 0 0.25rem', fontWeight: 600 }}>{label}</p>
+        {payload.map((p: any) => (
+          <p key={p.name} style={{ margin: '0.15rem 0', color: p.color }}>
+            {p.name}: {p.value}{unit}
+          </p>
+        ))}
+        <p style={{ margin: '0.25rem 0 0', borderTop: '1px solid #444', paddingTop: '0.25rem', fontWeight: 600, color: '#fff' }}>
+          Total: {parseFloat(total.toFixed(1))}{unit}
+        </p>
+      </div>
+    );
+  };
+
   const [isMemberChartHovered, setIsMemberChartHovered] = useState(false);
 
   const sortedDevelopers = [...team.developers].sort((a, b) => b.totalCommits - a.totalCommits);
@@ -354,17 +373,7 @@ export function TeamDetail({
                   <CartesianGrid strokeDasharray="3 3" stroke="#333" />
                   <XAxis type="number" stroke="#888" unit="h" />
                   <YAxis dataKey="name" type="category" stroke="#888" width={100} />
-                  <Tooltip
-                    contentStyle={{
-                      background: '#1a1a2e',
-                      border: '1px solid #333',
-                      borderRadius: '4px',
-                      color: '#fff',
-                    }}
-                    itemStyle={{ color: '#fff' }}
-                    labelStyle={{ color: '#fff' }}
-                    formatter={(value: number) => [`${value}h`]}
-                  />
+                  <Tooltip content={renderStackedTooltip('h')} />
                   <Legend />
                   {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                   <Bar dataKey="ai" name="AI Time" stackId="hours" fill={TYPE_COLORS.develop} label={((props: any) => {
