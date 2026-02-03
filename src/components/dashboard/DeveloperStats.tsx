@@ -185,6 +185,15 @@ export function DeveloperStats({
     };
 
   // Summary calculations
+  const dayCount = useMemo(() => {
+    const dates = new Set<string>();
+    commits.forEach((c) => {
+      const d = new Date(c.created_at);
+      dates.add(`${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`);
+    });
+    return dates.size || 1;
+  }, [commits]);
+
   const totalCommits = stats.reduce((sum, s) => sum + s.totalCommits, 0);
   const totalDevelop = stats.reduce(
     (sum, s) => sum + s.commitsByType.develop,
@@ -333,6 +342,12 @@ export function DeveloperStats({
               Meet {totalMeetingWorkHours.toFixed(1)}h
             </span>
           </span>
+          <div className={styles.statHoverTip}>
+            <span style={{ color: "#888", fontSize: "0.75rem" }}>Daily Avg ({dayCount}days)</span>
+            <span style={{ fontSize: "1.5rem", fontWeight: 600, color: "#6366f1" }}>
+              {(totalWorkHours / dayCount).toFixed(1)}h
+            </span>
+          </div>
         </div>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Human with AI Work Hours</span>
@@ -357,6 +372,12 @@ export function DeveloperStats({
               Meet {totalMeetingWorkHours.toFixed(1)}h
             </span>
           </span>
+          <div className={styles.statHoverTip}>
+            <span style={{ color: "#888", fontSize: "0.75rem" }}>Daily Avg ({dayCount}days)</span>
+            <span style={{ fontSize: "1.5rem", fontWeight: 600, color: "#6366f1" }}>
+              {((totalDevelopAiMinutes / 60 + totalMeetingWorkHours + totalChoreWorkHours) / dayCount).toFixed(1)}h
+            </span>
+          </div>
         </div>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Avg Productivity</span>
