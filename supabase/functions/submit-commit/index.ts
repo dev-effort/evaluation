@@ -27,6 +27,7 @@ interface CommitRequest {
   work_hours?: number;
   ai_driven_minutes?: number;
   productivity?: number;
+  agent_hash?: string;
 }
 
 serve(async (req) => {
@@ -137,6 +138,7 @@ serve(async (req) => {
       work_hours: data.work_hours || null,
       ai_driven_minutes: data.ai_driven_minutes || null,
       productivity: data.productivity || null,
+      agent_hash: data.agent_hash || null,
     });
 
     if (commitError) throw commitError;

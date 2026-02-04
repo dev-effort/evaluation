@@ -272,7 +272,14 @@ productivity: <percentage>%"
    - Run `git rev-parse HEAD` to get the commit hash
    - Run `git log -1 --pretty=%B` to get the full commit message (요약 + 상세 설명 포함)
 
-10. **Validate API data**: Dashboard API 제출 전 데이터가 올바른지 검증합니다:
+10. **Calculate agent hash**: git-commit-workflow.md 파일의 해시를 계산합니다:
+    ```bash
+    shasum -a 256 agent/git-commit-workflow.md | cut -d ' ' -f 1
+    ```
+    - 이 해시는 워크플로우 버전을 추적하는 데 사용됩니다
+    - API 제출 시 `agent_hash` 필드로 전송합니다
+
+11. **Validate API data**: Dashboard API 제출 전 데이터가 올바른지 검증합니다:
 
     **필수 필드 검증 (Required Fields Check):**
     | 필드 | 타입 | 값 출처 | 현재 값 | 통과 여부 |
@@ -302,12 +309,14 @@ productivity: <percentage>%"
     | work_hours | number | > 0 | ✅/❌ |
     | ai_driven_minutes | number | ≥ 0 | ✅/❌ |
     | productivity | number | ≥ 0 | ✅/❌ |
+    | agent_hash | string | SHA-256 해시 (64자) | ✅/❌ |
 
     **변수 매핑 검증:**
     - `developer_name` ← `developer.name` (config)
     - `developer_email` ← `developer.email` (config)
     - `team_name` ← `developer.team` (config, develop 타입일 때)
     - `type` ← `commit.type` (config)
+    - `agent_hash` ← `shasum -a 256 agent/git-commit-workflow.md` (SHA-256 해시)
     - API URL ← `commit.dashboardApiUrl` (config)
     - API Key ← `commit.dashboardApiKey` (config)
 
@@ -316,7 +325,7 @@ productivity: <percentage>%"
     - 타입이 맞지 않으면 수정
     - 범위를 벗어난 값이 있으면 수정
 
-11. **Submit to Dashboard API**: Send the evaluation data using the configuration from "Developer Configuration" section:
+12. **Submit to Dashboard API**: Send the evaluation data using the configuration from "Developer Configuration" section:
 
 ---
 
@@ -355,7 +364,12 @@ COMMIT_TYPE이 `meeting` 또는 `chore`로 설정된 경우, 사용자에게 추
 
 5. **Count changed lines** (있는 경우): `git diff --staged --shortstat`로 추가/삭제 라인 수를 수집합니다. 변경 사항이 없으면 `lines_added: 0`, `lines_deleted: 0`으로 설정합니다.
 
-6. **Submit to Dashboard API**: 입력받은 정보로 API 제출:
+6. **Calculate agent hash**: git-commit-workflow.md 파일의 해시를 계산합니다:
+   ```bash
+   shasum -a 256 agent/git-commit-workflow.md | cut -d ' ' -f 1
+   ```
+
+7. **Submit to Dashboard API**: 입력받은 정보로 API 제출:
    - `type`: 사용자가 선택한 type (meeting/chore)
    - `team_name`: 사용자가 `team` 배열에서 선택한 팀
    - `work_hours`: 사용자가 입력한 작업 시간
@@ -364,8 +378,9 @@ COMMIT_TYPE이 `meeting` 또는 `chore`로 설정된 경우, 사용자에게 추
    - `lines_deleted`: 삭제된 코드 라인 수
    - `ai_driven_minutes`: 0 (AI 지원 시간 없음)
    - `productivity`: 0 (생산성 계산 불가)
+   - `agent_hash`: git-commit-workflow.md 파일의 SHA-256 해시
 
-7. **Push to remote**: Run `git push` to push the commit to the remote repository. If the current branch has no upstream, use `git push -u origin <branch-name>` instead.
+8. **Push to remote**: Run `git push` to push the commit to the remote repository. If the current branch has no upstream, use `git push -u origin <branch-name>` instead.
 
 #### meeting/chore 커밋 예시
 
@@ -378,6 +393,9 @@ git commit -m "chore: 스프린트 계획 회의
 - 기술 부채 해결 방안 검토
 
 H: 2h"
+
+# Get agent hash
+AGENT_HASH=$(shasum -a 256 agent/git-commit-workflow.md | cut -d ' ' -f 1)
 
 # API 제출 (meeting 타입, 선택한 팀으로 제출)
 curl -X POST "{DASHBOARD_API_URL}" \
@@ -402,7 +420,8 @@ curl -X POST "{DASHBOARD_API_URL}" \
     "lines_deleted": 0,
     "work_hours": 2,
     "ai_driven_minutes": 0,
-    "productivity": 0
+    "productivity": 0,
+    "agent_hash": "'"$AGENT_HASH"'"
   }'
 ```
 
@@ -435,13 +454,14 @@ curl -X POST "{DASHBOARD_API_URL}" \
     "lines_deleted": <lines-deleted>,
     "work_hours": <human-time-in-hours>,
     "ai_driven_minutes": <ai-time-in-minutes>,
-    "productivity": <productivity-percentage>
+    "productivity": <productivity-percentage>,
+    "agent_hash": "<git-commit-workflow.md-sha256-hash>"
   }'
 ```
 
-12. **Show commit result**: Run `git status` to verify and show the commit summary and API submission result to the user
+13. **Show commit result**: Run `git status` to verify and show the commit summary and API submission result to the user
 
-13. **Push to remote**: Run `git push` to push the commit to the remote repository. If the current branch has no upstream, use `git push -u origin <branch-name>` instead.
+14. **Push to remote**: Run `git push` to push the commit to the remote repository. If the current branch has no upstream, use `git push -u origin <branch-name>` instead.
 
 ## Examples
 
@@ -480,9 +500,10 @@ H: 1h
 ai driven: 10m
 productivity: 600%"
 
-# Get commit ID and full message
+# Get commit ID, full message, and agent hash
 COMMIT_ID=$(git rev-parse HEAD)
 COMMIT_MESSAGE=$(git log -1 --pretty=%B)
+AGENT_HASH=$(shasum -a 256 agent/git-commit-workflow.md | cut -d ' ' -f 1)
 
 # Submit to dashboard API (using Developer Configuration values)
 # message 필드에 전체 커밋 메세지를 포함
@@ -508,7 +529,8 @@ curl -X POST "{DASHBOARD_API_URL}" \
     "lines_deleted": 30,
     "work_hours": 4,
     "ai_driven_minutes": 40,
-    "productivity": 600
+    "productivity": 600,
+    "agent_hash": "'"$AGENT_HASH"'"
   }'
 ```
 
