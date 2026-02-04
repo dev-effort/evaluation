@@ -19,8 +19,9 @@ cat .claude/developer-config.json
   "developer": {
     "name": "개발자 이름",
     "email": "이메일",
-    "team": "팀명"
+    "team": "기본 팀명 (develop 타입에서 사용)"
   },
+  "team": ["팀1", "팀2", "팀3"],
   "commit": {
     "type": "develop | meeting | chore",
     "dashboardApiUrl": "Dashboard API URL",
@@ -36,11 +37,13 @@ cat .claude/developer-config.json
 
 - `DEVELOPER_NAME` → `developer.name`
 - `DEVELOPER_EMAIL` → `developer.email`
-- `TEAM_NAME` → `developer.team`
+- `TEAM_NAME` → COMMIT_TYPE에 따라 다름:
+  - **develop**: `developer.team` 사용 (기본 팀)
+  - **meeting/chore**: `team` 배열에서 사용자가 선택
 - `COMMIT_TYPE` → `commit.type`
 - `DASHBOARD_API_URL` → `commit.dashboardApiUrl`
 - `DASHBOARD_API_KEY` → `commit.dashboardApiKey`
-- **Scope 목록** → `scopes` 객체의 키 목록 (파일 경로에서 자동 판별, 판별 불가 시 사용자에게 scopes 목록 중 선택 요청)
+- **Scope 목록** → `scopes` 객체의 키 목록 (파일 경로에서 자동 판별, 판별 불가 시 scope 생략)
 
 ### COMMIT_TYPE 설명
 
@@ -68,7 +71,7 @@ When files have been staged with `git add`, you will create and execute a git co
 ## Commit Message Format
 
 ```
-git commit -m "<prefix>(<scope>): <요약 메세지 (한글)>
+git commit -m "<prefix>[(<scope>)]: <요약 메세지 (한글)>
 
 <상세 설명 (한글, 여러 줄 가능)>
 - 변경 사항 1
@@ -104,11 +107,12 @@ productivity: <percentage>%"
 - `refactor` - refactoring
 - `docs` - documentation
 
-### Scope (based on module):
+### Scope (based on module) - 선택사항:
 
 - `developer-config.json`의 `scopes` 객체에서 사용 가능한 scope 목록을 참조
 - 파일 경로에서 scope를 자동 판별 (예: `apps/admin/` → `bo`, `apps/host/` → `console`)
-- 자동 판별이 불가능한 경우, scopes 목록을 사용자에게 보여주고 선택 요청
+- 자동 판별이 불가능한 경우, scope 없이 커밋 메세지 작성 (예: `feat: 요약 메세지`)
+- scope가 명확한 경우에만 괄호와 함께 포함 (예: `feat(console): 요약 메세지`)
 
 ### Jira Ticket Reference:
 
@@ -210,13 +214,109 @@ productivity: <percentage>%"
    - **ai driven time**: Estimate time with AI assistance
    - **productivity**: Calculate percentage
 
-6. **Execute commit**: Run `git add` if needed, then execute git commit with the formatted message including evaluation (no confirmation required)
+6. **Validate evaluation**: 평가 점수가 올바른지 검증합니다:
 
-7. **Get commit ID and message**: After successful commit:
+   **범위 검증 (Range Check):**
+   | Item | Valid Range | 현재 값 | 통과 여부 |
+   |------|-------------|---------|-----------|
+   | complexity | 0-4 | ? | ✅/❌ |
+   | volume | 0-2 | ? | ✅/❌ |
+   | thinking | 0-2 | ? | ✅/❌ |
+   | others | 0-2 | ? | ✅/❌ |
+   | **total** | 0-10 | ? | ✅/❌ |
+
+   **합계 검증 (Sum Check):**
+   - total = complexity + volume + thinking + others
+   - 계산된 합계와 total이 일치하는지 확인
+
+   **논리 검증 (Logic Check):**
+   - volume 점수가 실제 변경 라인 수와 일치하는지 확인:
+     - 0: 1-10 lines
+     - 1: 11-100 lines or 1-3 files
+     - 2: 100+ lines or 4+ files
+   - complexity 점수가 작업 난이도와 일치하는지 재검토
+
+   **검증 실패 시:**
+   - 범위를 벗어난 점수가 있으면 수정 후 다시 검증
+   - 합계가 맞지 않으면 수정
+   - 논리적으로 맞지 않으면 점수 조정
+
+7. **Validate commit message format**: 커밋 메세지가 올바른 포맷인지 검증합니다:
+
+   **구조 검증 (Structure Check):**
+   | 항목 | 필수 여부 | 현재 값 | 통과 여부 |
+   |------|-----------|---------|-----------|
+   | prefix | ✅ 필수 | feat/fix/chore/refactor/docs 중 하나 | ✅/❌ |
+   | scope | ⚪ 선택 | 없음 또는 scopes 객체의 키 | ✅/❌ |
+   | 요약 메세지 | ✅ 필수 | 한글, 50자 이내 | ✅/❌ |
+   | 상세 설명 | ✅ 필수 | 한글, bullet point 형식 | ✅/❌ |
+   | evaluation | ✅ 필수 | 포맷: `evaluation: N (complexity: N, volume: N, thinking: N, others: N)` | ✅/❌ |
+   | comment | ✅ 필수 | 한글 1-2문장 | ✅/❌ |
+   | H | ✅ 필수 | 시간 포맷 (예: 1h, 30m) | ✅/❌ |
+   | ai driven | ✅ 필수 | 시간 포맷 (예: 10m, 1h) | ✅/❌ |
+   | productivity | ✅ 필수 | 퍼센트 포맷 (예: 600%) | ✅/❌ |
+
+   **포맷 검증 (Format Check):**
+   - 첫 줄: `<prefix>[(<scope>)]: <요약 메세지>` 형식인지 확인
+   - prefix가 유효한 값인지 확인 (feat/fix/chore/refactor/docs)
+   - scope가 있다면 `developer-config.json`의 scopes에 정의된 키인지 확인
+   - 요약 메세지가 한글이고 50자 이내인지 확인
+
+   **검증 실패 시:**
+   - 포맷이 맞지 않으면 수정 후 다시 검증
+   - 누락된 필수 항목이 있으면 추가
+
+8. **Execute commit**: Run `git add` if needed, then execute git commit with the formatted message including evaluation (no confirmation required)
+
+9. **Get commit ID and message**: After successful commit:
    - Run `git rev-parse HEAD` to get the commit hash
    - Run `git log -1 --pretty=%B` to get the full commit message (요약 + 상세 설명 포함)
 
-8. **Submit to Dashboard API**: Send the evaluation data using the configuration from "Developer Configuration" section:
+10. **Validate API data**: Dashboard API 제출 전 데이터가 올바른지 검증합니다:
+
+    **필수 필드 검증 (Required Fields Check):**
+    | 필드 | 타입 | 값 출처 | 현재 값 | 통과 여부 |
+    |------|------|---------|---------|-----------|
+    | commit_id | string | `git rev-parse HEAD` | ? | ✅/❌ |
+    | message | string | `git log -1 --pretty=%B` | ? | ✅/❌ |
+    | developer_name | string | `developer.name` | ? | ✅/❌ |
+    | developer_email | string | `developer.email` | ? | ✅/❌ |
+    | team_name | string | `developer.team` (develop) 또는 선택된 팀 | ? | ✅/❌ |
+    | type | string | `commit.type` | develop/meeting/chore | ✅/❌ |
+
+    **evaluation 객체 검증:**
+    | 필드 | 타입 | 범위 | 현재 값 | 통과 여부 |
+    |------|------|------|---------|-----------|
+    | total | number | 0-10 | ? | ✅/❌ |
+    | complexity | number | 0-4 | ? | ✅/❌ |
+    | volume | number | 0-2 | ? | ✅/❌ |
+    | thinking | number | 0-2 | ? | ✅/❌ |
+    | others | number | 0-2 | ? | ✅/❌ |
+
+    **추가 필드 검증:**
+    | 필드 | 타입 | 현재 값 | 통과 여부 |
+    |------|------|---------|-----------|
+    | comment | string | 한글 1-2문장 | ✅/❌ |
+    | lines_added | number | ≥ 0 | ✅/❌ |
+    | lines_deleted | number | ≥ 0 | ✅/❌ |
+    | work_hours | number | > 0 | ✅/❌ |
+    | ai_driven_minutes | number | ≥ 0 | ✅/❌ |
+    | productivity | number | ≥ 0 | ✅/❌ |
+
+    **변수 매핑 검증:**
+    - `developer_name` ← `developer.name` (config)
+    - `developer_email` ← `developer.email` (config)
+    - `team_name` ← `developer.team` (config, develop 타입일 때)
+    - `type` ← `commit.type` (config)
+    - API URL ← `commit.dashboardApiUrl` (config)
+    - API Key ← `commit.dashboardApiKey` (config)
+
+    **검증 실패 시:**
+    - 누락된 필드가 있으면 추가
+    - 타입이 맞지 않으면 수정
+    - 범위를 벗어난 값이 있으면 수정
+
+11. **Submit to Dashboard API**: Send the evaluation data using the configuration from "Developer Configuration" section:
 
 ---
 
@@ -228,6 +328,7 @@ COMMIT_TYPE이 `meeting` 또는 `chore`로 설정된 경우, 사용자에게 추
 
 1. **사용자 입력 요청**: 다음 정보를 사용자에게 질문합니다:
    - **type**: `meeting` 또는 `chore` 중 선택 (COMMIT_TYPE이 이미 설정되어 있으면 확인만)
+   - **team**: `team` 배열에서 팀 선택 (예: ["Evaluation", "Frontend", "Console", "Mzc-web"] 중 하나)
    - **work_hours**: 실제 작업 시간 (예: 1, 1.5, 2 등 숫자로 입력)
    - **commit_message**: 커밋 메세지 내용 (한글로 작성)
      - 요약 메세지 (50자 이내)
@@ -236,12 +337,15 @@ COMMIT_TYPE이 `meeting` 또는 `chore`로 설정된 경우, 사용자에게 추
 2. **커밋 메세지 포맷**: 입력받은 정보를 기반으로 커밋 메세지 생성:
 
    ```
-   chore(console): <요약 메세지>
+   chore[(<scope>)]: <요약 메세지>
 
    <상세 설명 (있는 경우)>
 
    H: <work_hours>h
    ```
+
+   - scope가 있는 경우: `chore(console): 요약 메세지`
+   - scope가 없는 경우: `chore: 요약 메세지`
 
 3. **Execute commit**: 생성된 메세지로 git commit 실행
 
@@ -253,6 +357,7 @@ COMMIT_TYPE이 `meeting` 또는 `chore`로 설정된 경우, 사용자에게 추
 
 6. **Submit to Dashboard API**: 입력받은 정보로 API 제출:
    - `type`: 사용자가 선택한 type (meeting/chore)
+   - `team_name`: 사용자가 `team` 배열에서 선택한 팀
    - `work_hours`: 사용자가 입력한 작업 시간
    - `evaluation`: meeting/chore의 경우 모든 점수는 0으로 설정
    - `lines_added`: 추가된 코드 라인 수
@@ -265,8 +370,8 @@ COMMIT_TYPE이 `meeting` 또는 `chore`로 설정된 경우, 사용자에게 추
 #### meeting/chore 커밋 예시
 
 ```bash
-# 회의 커밋 예시
-git commit -m "chore(console): 스프린트 계획 회의
+# 회의 커밋 예시 (team 배열에서 "Frontend" 선택한 경우)
+git commit -m "chore: 스프린트 계획 회의
 
 - 다음 스프린트 목표 설정
 - 태스크 분배 논의
@@ -274,7 +379,7 @@ git commit -m "chore(console): 스프린트 계획 회의
 
 H: 2h"
 
-# API 제출 (meeting 타입)
+# API 제출 (meeting 타입, 선택한 팀으로 제출)
 curl -X POST "{DASHBOARD_API_URL}" \
   -H "Content-Type: application/json" \
   -H "X-API-Key: {DASHBOARD_API_KEY}" \
@@ -283,7 +388,7 @@ curl -X POST "{DASHBOARD_API_URL}" \
     "message": "<전체 커밋 메세지>",
     "developer_name": "{DEVELOPER_NAME}",
     "developer_email": "{DEVELOPER_EMAIL}",
-    "team_name": "{TEAM_NAME}",
+    "team_name": "Frontend",
     "type": "meeting",
     "evaluation": {
       "total": 0,
@@ -334,9 +439,9 @@ curl -X POST "{DASHBOARD_API_URL}" \
   }'
 ```
 
-9. **Show commit result**: Run `git status` to verify and show the commit summary and API submission result to the user
+12. **Show commit result**: Run `git status` to verify and show the commit summary and API submission result to the user
 
-10. **Push to remote**: Run `git push` to push the commit to the remote repository. If the current branch has no upstream, use `git push -u origin <branch-name>` instead.
+13. **Push to remote**: Run `git push` to push the commit to the remote repository. If the current branch has no upstream, use `git push -u origin <branch-name>` instead.
 
 ## Examples
 
@@ -412,7 +517,7 @@ curl -X POST "{DASHBOARD_API_URL}" \
 - **staged 파일이 있으면 해당 파일만 커밋하고, 절대로 다른 파일을 추가 stage하지 않는다**
 - staged 파일이 없는 경우에만 모든 변경 파일을 auto-stage한다 (see Workflow step 1)
 - If no Jira ticket is found in branch name, ask the user for the ticket ID
-- If scope (bo/console) cannot be determined from file paths, ask the user
+- If scope cannot be determined from file paths, proceed without scope (선택사항)
 - 커밋 메세지는 반드시 한글로 작성 (prefix와 scope는 영문 유지)
 - 요약 메세지는 50자 이내로 간결하게 작성
 - 상세 설명은 변경 사항을 bullet point로 구체적으로 나열

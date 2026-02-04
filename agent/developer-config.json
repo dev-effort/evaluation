@@ -4,12 +4,14 @@
     "email": "seungjunkim@mz.co.kr",
     "team": "Evaluation"
   },
+  "team": ["Evaluation", "Frontend", "Console", "Mzc-web"],
   "commit": {
-    "type": "develop",
+    "type": "chore",
     "dashboardApiUrl": "https://jndewoaceiynicwxwwxe.supabase.co/functions/v1/submit-commit",
-    "dashboardApiKey": "b98be5fbfda1e18de65167f894ae1a93cec0520b6951cfba3ce4f35de4163ebd"
+    "dashboardApiKey": "김승준에게 문의 seungjunkim@mz.co.kr"
   },
   "scopes": {
-    "evaluation1": "For console/frontend related changes"
+    "bo": "For admin/backoffice related changes",
+    "console": "For console/frontend related changes"
   }
 }
