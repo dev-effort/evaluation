@@ -29,6 +29,7 @@ yarn-error.log*
 
 # Claude
 .claude/commands/git-commit-formatter.md
+.claude/developer-config.json
 
 # Vercel
 .vercel
