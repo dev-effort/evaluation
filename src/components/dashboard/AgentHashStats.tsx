@@ -9,7 +9,6 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
-  TooltipProps,
 } from 'recharts';
 import type { Commit } from '@/types';
 import { DateFilter } from './DateFilter';
@@ -40,11 +39,11 @@ export function AgentHashStats({ commits, dateRange, onDateRangeChange }: AgentH
 
     if (hashCommits.length === 0) {
       return {
-        dailyData: [],
-        expectedHash: null,
-        uniqueHashes: [],
+        dailyData: [] as DayData[],
+        expectedHash: null as string | null,
+        uniqueHashes: [] as string[],
         summary: { totalCommits: 0, normalCount: 0, anomalyCount: 0 },
-        hashDetails: [],
+        hashDetails: [] as Array<{ hash: string; count: number; percentage: string; isNormal: boolean; developers: string[] }>,
       };
     }
 
@@ -139,7 +138,7 @@ export function AgentHashStats({ commits, dateRange, onDateRangeChange }: AgentH
     };
   }, [commits]);
 
-  const getHashColor = (hash: string, index: number) => {
+  const getHashColor = (hash: string) => {
     if (hash === expectedHash) return NORMAL_COLOR;
     const anomalyIndex = uniqueHashes.filter(h => h !== expectedHash).indexOf(hash);
     return ANOMALY_COLORS[anomalyIndex % ANOMALY_COLORS.length];
@@ -150,7 +149,12 @@ export function AgentHashStats({ commits, dateRange, onDateRangeChange }: AgentH
     return hash === expectedHash ? `${shortHash}... (정상)` : `${shortHash}... (비정상)`;
   };
 
-  const CustomTooltip = ({ active, payload, label }: TooltipProps<number, string>) => {
+  const CustomTooltip = (props: {
+    active?: boolean;
+    payload?: Array<{ color?: string; name?: string; value?: number }>;
+    label?: string;
+  }) => {
+    const { active, payload, label } = props;
     if (!active || !payload) return null;
     return (
       <div style={{
@@ -160,8 +164,8 @@ export function AgentHashStats({ commits, dateRange, onDateRangeChange }: AgentH
         padding: '0.75rem',
       }}>
         <p style={{ color: '#fff', margin: '0 0 0.5rem', fontWeight: 500 }}>{label}요일</p>
-        {payload.map((entry, index) => (
-          <p key={index} style={{ color: entry.color, margin: '0.25rem 0', fontSize: '0.85rem' }}>
+        {payload.map((entry, idx) => (
+          <p key={idx} style={{ color: entry.color, margin: '0.25rem 0', fontSize: '0.85rem' }}>
             {entry.name}: {entry.value}건
           </p>
         ))}
@@ -244,13 +248,13 @@ export function AgentHashStats({ commits, dateRange, onDateRangeChange }: AgentH
               <YAxis stroke="#888" />
               <Tooltip content={<CustomTooltip />} />
               <Legend />
-              {uniqueHashes.map((hash, index) => (
+              {uniqueHashes.map((hash) => (
                 <Bar
                   key={hash}
                   dataKey={hash}
                   name={getHashLabel(hash)}
                   stackId="hashes"
-                  fill={getHashColor(hash, index)}
+                  fill={getHashColor(hash)}
                 />
               ))}
             </BarChart>

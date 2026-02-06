@@ -21,7 +21,7 @@ export function AgentHashDetail({ commits, dateRange, onDateRangeChange }: Agent
   const navigate = useNavigate();
   const decodedHash = hash ? decodeURIComponent(hash) : '';
 
-  const { hashInfo, users, isNormal, totalHashCommits } = useMemo(() => {
+  const { hashInfo, users, isNormal } = useMemo(() => {
     // agent_hash가 있는 커밋만 필터
     const hashCommits = commits.filter(c => c.agent_hash);
 
