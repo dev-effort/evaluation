@@ -11,6 +11,7 @@ const navItems: NavItem[] = [
   { path: '/', label: 'Summary', icon: 'chart' },
   { path: '/developers', label: 'Developers', icon: 'user' },
   { path: '/teams', label: 'Teams', icon: 'users' },
+  { path: '/agent-hash', label: 'Agent Hash', icon: 'hash' },
 ];
 
 export function Sidebar() {
@@ -42,6 +43,8 @@ function getIcon(icon: string): string {
       return '\u263A';
     case 'users':
       return '\u2302';
+    case 'hash':
+      return '#';
     default:
       return '\u2022';
   }

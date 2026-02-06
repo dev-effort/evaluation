@@ -6,6 +6,8 @@ import { DeveloperStats } from '@/components/dashboard/DeveloperStats';
 import { DeveloperDetail } from '@/components/dashboard/DeveloperDetail';
 import { TeamStats } from '@/components/dashboard/TeamStats';
 import { TeamDetail } from '@/components/dashboard/TeamDetail';
+import { AgentHashStats } from '@/components/dashboard/AgentHashStats';
+import { AgentHashDetail } from '@/components/dashboard/AgentHashDetail';
 import { useCommits } from '@/hooks/useCommits';
 import styles from './DashboardPage.module.css';
 
@@ -99,6 +101,26 @@ export function DashboardPage() {
             element={
               <TeamDetail
                 teamStats={teamStats}
+                commits={commits}
+                dateRange={dateRange}
+                onDateRangeChange={(start, end) => setDateRange({ startDate: start, endDate: end })}
+              />
+            }
+          />
+          <Route
+            path="agent-hash"
+            element={
+              <AgentHashStats
+                commits={commits}
+                dateRange={dateRange}
+                onDateRangeChange={(start, end) => setDateRange({ startDate: start, endDate: end })}
+              />
+            }
+          />
+          <Route
+            path="agent-hash/:hash"
+            element={
+              <AgentHashDetail
                 commits={commits}
                 dateRange={dateRange}
                 onDateRangeChange={(start, end) => setDateRange({ startDate: start, endDate: end })}

@@ -47,6 +47,7 @@ export interface Commit {
   work_hours: number | null;
   ai_driven_minutes: number | null;
   productivity: number | null;
+  agent_hash: string | null;
   created_at: string;
   developer?: Developer;
 }
