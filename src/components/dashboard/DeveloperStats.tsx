@@ -371,6 +371,16 @@ export function DeveloperStats({
     return { devMap, devTeamMap };
   }, [commits]);
 
+  // Developer lines data for chart
+  const developerLinesData = sortedByCommits.map((s) => {
+    const lines = developLinesMap.devMap.get(s.developer.id);
+    return {
+      name: s.developer.name,
+      added: lines?.added ?? 0,
+      deleted: lines?.deleted ?? 0,
+    };
+  });
+
   // Build team lookup: developerId -> team names
   const teamMap = useMemo(() => {
     const tMap = new Map<string, string>();
@@ -1062,6 +1072,71 @@ export function DeveloperStats({
                       >
                         {v}h
                       </text>
+                    );
+                  }) as any
+                }
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
+        <div className={styles.chartCard}>
+          <h3 className={styles.chartTitle}>Lines of Code by Developer</h3>
+          <ResponsiveContainer width="100%" height={350}>
+            <BarChart data={developerLinesData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+              <XAxis
+                dataKey="name"
+                type="category"
+                stroke="#888"
+                interval={0}
+              />
+              <YAxis type="number" stroke="#888" />
+              <Tooltip content={renderStackedTooltip(" lines")} />
+              <Legend />
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              <Bar
+                dataKey="added"
+                name="Added"
+                stackId="lines"
+                fill="#22c55e"
+                label={
+                  ((props: any) => {
+                    const v = developerLinesData[props.index]?.added;
+                    if (!v) return null;
+                    return (
+                      <text
+                        x={props.x + props.width / 2}
+                        y={props.y + props.height / 2}
+                        fill="#fff"
+                        fontSize={10}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                      >{`+${v}`}</text>
+                    );
+                  }) as any
+                }
+              />
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              <Bar
+                dataKey="deleted"
+                name="Deleted"
+                stackId="lines"
+                fill="#ef4444"
+                radius={[4, 4, 0, 0]}
+                label={
+                  ((props: any) => {
+                    const v = developerLinesData[props.index]?.deleted;
+                    if (!v) return null;
+                    return (
+                      <text
+                        x={props.x + props.width / 2}
+                        y={props.y + props.height / 2}
+                        fill="#fff"
+                        fontSize={10}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                      >{`-${v}`}</text>
                     );
                   }) as any
                 }
