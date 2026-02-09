@@ -76,6 +76,34 @@ export function TeamDetail({
     return dates.size || 1;
   }, [commits, teamMemberIds]);
 
+  // Daily lines of code data for the team (develop commits only)
+  const linesChartData = useMemo(() => {
+    const teamDevelopCommits = commits.filter(
+      (c) =>
+        teamMemberIds.includes(c.developer_id || '') &&
+        (c.type === 'develop' || c.type === null)
+    );
+
+    const linesByDate = teamDevelopCommits.reduce((acc, commit) => {
+      const date = new Date(commit.created_at).toLocaleDateString('ko-KR');
+      if (!acc[date]) {
+        acc[date] = { added: 0, deleted: 0 };
+      }
+      acc[date].added += commit.lines_added || 0;
+      acc[date].deleted += commit.lines_deleted || 0;
+      return acc;
+    }, {} as Record<string, { added: number; deleted: number }>);
+
+    return Object.entries(linesByDate)
+      .map(([date, data]) => ({
+        date,
+        added: data.added,
+        deleted: data.deleted,
+      }))
+      .reverse()
+      .slice(-14);
+  }, [commits, teamMemberIds]);
+
   if (!team) {
     return (
       <div className={styles.container}>
@@ -356,6 +384,70 @@ export function TeamDetail({
           </div>
         </div>
       </div>
+
+      {linesChartData.length > 0 && (
+        <div className={styles.chartCard} style={{ marginBottom: '1.5rem' }}>
+          <h3 className={styles.chartTitle}>Lines of Code Over Time</h3>
+          <div className={styles.chartContainer}>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={linesChartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                <XAxis dataKey="date" stroke="#888" fontSize={12} />
+                <YAxis stroke="#888" />
+                <Tooltip content={renderStackedTooltip(' lines')} />
+                <Legend />
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                <Bar
+                  dataKey="added"
+                  name="Added"
+                  stackId="lines"
+                  fill="#22c55e"
+                  label={
+                    ((props: any) => {
+                      const v = linesChartData[props.index]?.added;
+                      if (!v) return null;
+                      return (
+                        <text
+                          x={props.x + props.width / 2}
+                          y={props.y + props.height / 2}
+                          fill="#fff"
+                          fontSize={10}
+                          textAnchor="middle"
+                          dominantBaseline="middle"
+                        >{`+${v}`}</text>
+                      );
+                    }) as any
+                  }
+                />
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                <Bar
+                  dataKey="deleted"
+                  name="Deleted"
+                  stackId="lines"
+                  fill="#ef4444"
+                  radius={[4, 4, 0, 0]}
+                  label={
+                    ((props: any) => {
+                      const v = linesChartData[props.index]?.deleted;
+                      if (!v) return null;
+                      return (
+                        <text
+                          x={props.x + props.width / 2}
+                          y={props.y + props.height / 2}
+                          fill="#fff"
+                          fontSize={10}
+                          textAnchor="middle"
+                          dominantBaseline="middle"
+                        >{`-${v}`}</text>
+                      );
+                    }) as any
+                  }
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
 
       <div className={styles.chartsGrid}>
         <div

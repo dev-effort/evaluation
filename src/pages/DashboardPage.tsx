@@ -91,6 +91,7 @@ export function DashboardPage() {
             element={
               <TeamStats
                 stats={teamStats}
+                commits={commits}
                 dateRange={dateRange}
                 onDateRangeChange={(start, end) => setDateRange({ startDate: start, endDate: end })}
               />
