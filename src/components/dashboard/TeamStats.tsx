@@ -130,10 +130,9 @@ export function TeamStats({
 
   // Lines of code by team (develop commits only)
   const teamLinesData = sortedByCommits.map((s) => {
-    const teamMemberIds = s.developers.map((d) => d.developer.id);
     const teamDevelopCommits = commits.filter(
       (c) =>
-        teamMemberIds.includes(c.developer_id || "") &&
+        c.team_id === s.team.id &&
         (c.type === "develop" || c.type === null),
     );
     const added = teamDevelopCommits.reduce(

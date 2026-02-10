@@ -1,5 +1,5 @@
-import { useMemo, useState, ReactNode } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useMemo, useState, ReactNode } from "react";
+import { useParams, Link } from "react-router-dom";
 import {
   BarChart,
   Bar,
@@ -17,26 +17,49 @@ import {
   Pie,
   Cell,
   Legend,
-} from 'recharts';
-import type { DeveloperStats, Commit, Developer, Team } from '@/types';
-import { DateFilter } from './DateFilter';
-import styles from './DeveloperDetail.module.css';
+} from "recharts";
+import type { DeveloperStats, Commit, Developer, Team } from "@/types";
+import { DateFilter } from "./DateFilter";
+import styles from "./DeveloperDetail.module.css";
 
-const renderStackedTooltip = (unit: string, showTotal = true) =>
+const renderStackedTooltip =
+  (unit: string, showTotal = true) =>
   ({ active, payload, label }: any) => {
     if (!active || !payload?.length) return null;
-    const total = payload.reduce((sum: number, p: any) => sum + (p.value || 0), 0);
+    const total = payload.reduce(
+      (sum: number, p: any) => sum + (p.value || 0),
+      0,
+    );
     return (
-      <div style={{ background: '#1a1a2e', border: '1px solid #333', borderRadius: '4px', padding: '0.5rem 0.75rem', color: '#fff', fontSize: '0.85rem' }}>
-        <p style={{ margin: '0 0 0.25rem', fontWeight: 600 }}>{label}</p>
+      <div
+        style={{
+          background: "#1a1a2e",
+          border: "1px solid #333",
+          borderRadius: "4px",
+          padding: "0.5rem 0.75rem",
+          color: "#fff",
+          fontSize: "0.85rem",
+        }}
+      >
+        <p style={{ margin: "0 0 0.25rem", fontWeight: 600 }}>{label}</p>
         {payload.map((p: any) => (
-          <p key={p.name} style={{ margin: '0.15rem 0', color: p.color }}>
-            {p.name}: {p.value}{unit}
+          <p key={p.name} style={{ margin: "0.15rem 0", color: p.color }}>
+            {p.name}: {p.value}
+            {unit}
           </p>
         ))}
         {showTotal && (
-          <p style={{ margin: '0.25rem 0 0', borderTop: '1px solid #444', paddingTop: '0.25rem', fontWeight: 600, color: '#fff' }}>
-            Total: {parseFloat(total.toFixed(1))}{unit}
+          <p
+            style={{
+              margin: "0.25rem 0 0",
+              borderTop: "1px solid #444",
+              paddingTop: "0.25rem",
+              fontWeight: 600,
+              color: "#fff",
+            }}
+          >
+            Total: {parseFloat(total.toFixed(1))}
+            {unit}
           </p>
         )}
       </div>
@@ -45,33 +68,64 @@ const renderStackedTooltip = (unit: string, showTotal = true) =>
 
 const renderWorkHoursTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
-  const humanKeys = ['develop', 'meeting', 'chore'];
-  const aiKeys = ['aiTime', 'aiMeeting', 'aiChore'];
+  const humanKeys = ["develop", "meeting", "chore"];
+  const aiKeys = ["aiTime", "aiMeeting", "aiChore"];
   const humanItems = payload.filter((p: any) => humanKeys.includes(p.dataKey));
   const aiItems = payload.filter((p: any) => aiKeys.includes(p.dataKey));
-  const humanTotal = humanItems.reduce((sum: number, p: any) => sum + (p.value || 0), 0);
-  const aiTotal = aiItems.reduce((sum: number, p: any) => sum + (p.value || 0), 0);
+  const humanTotal = humanItems.reduce(
+    (sum: number, p: any) => sum + (p.value || 0),
+    0,
+  );
+  const aiTotal = aiItems.reduce(
+    (sum: number, p: any) => sum + (p.value || 0),
+    0,
+  );
   return (
-    <div style={{ background: '#1a1a2e', border: '1px solid #333', borderRadius: '4px', padding: '0.5rem 0.75rem', color: '#fff', fontSize: '0.85rem' }}>
-      <p style={{ margin: '0 0 0.4rem', fontWeight: 600 }}>{label}</p>
-      <div style={{ display: 'flex', gap: '0.75rem' }}>
+    <div
+      style={{
+        background: "#1a1a2e",
+        border: "1px solid #333",
+        borderRadius: "4px",
+        padding: "0.5rem 0.75rem",
+        color: "#fff",
+        fontSize: "0.85rem",
+      }}
+    >
+      <p style={{ margin: "0 0 0.4rem", fontWeight: 600 }}>{label}</p>
+      <div style={{ display: "flex", gap: "0.75rem" }}>
         <div>
           {humanItems.map((p: any) => (
-            <p key={p.dataKey} style={{ margin: '0.15rem 0', color: p.color }}>
+            <p key={p.dataKey} style={{ margin: "0.15rem 0", color: p.color }}>
               {p.name}: {p.value}h
             </p>
           ))}
-          <p style={{ margin: '0.25rem 0 0', borderTop: '1px solid #444', paddingTop: '0.25rem', fontWeight: 600, color: '#fff' }}>
+          <p
+            style={{
+              margin: "0.25rem 0 0",
+              borderTop: "1px solid #444",
+              paddingTop: "0.25rem",
+              fontWeight: 600,
+              color: "#fff",
+            }}
+          >
             Work: {parseFloat(humanTotal.toFixed(1))}h
           </p>
         </div>
-        <div style={{ borderLeft: '1px solid #444', paddingLeft: '0.75rem' }}>
+        <div style={{ borderLeft: "1px solid #444", paddingLeft: "0.75rem" }}>
           {aiItems.map((p: any) => (
-            <p key={p.dataKey} style={{ margin: '0.15rem 0', color: p.color }}>
+            <p key={p.dataKey} style={{ margin: "0.15rem 0", color: p.color }}>
               {p.name}: {p.value}h
             </p>
           ))}
-          <p style={{ margin: '0.25rem 0 0', borderTop: '1px solid #444', paddingTop: '0.25rem', fontWeight: 600, color: '#fff' }}>
+          <p
+            style={{
+              margin: "0.25rem 0 0",
+              borderTop: "1px solid #444",
+              paddingTop: "0.25rem",
+              fontWeight: 600,
+              color: "#fff",
+            }}
+          >
             AI: {parseFloat(aiTotal.toFixed(1))}h
           </p>
         </div>
@@ -80,21 +134,32 @@ const renderWorkHoursTooltip = ({ active, payload, label }: any) => {
   );
 };
 
-const renderPieTooltip = (unit: string) =>
+const renderPieTooltip =
+  (unit: string) =>
   ({ active, payload }: any) => {
     if (!active || !payload?.length) return null;
     const entry = payload[0];
     return (
-      <div style={{ background: '#1a1a2e', border: '1px solid #333', borderRadius: '4px', padding: '0.5rem 0.75rem', color: '#fff', fontSize: '0.85rem' }}>
+      <div
+        style={{
+          background: "#1a1a2e",
+          border: "1px solid #333",
+          borderRadius: "4px",
+          padding: "0.5rem 0.75rem",
+          color: "#fff",
+          fontSize: "0.85rem",
+        }}
+      >
         <p style={{ margin: 0, color: entry.payload?.fill || entry.color }}>
-          {entry.name}: {entry.value}{unit}
+          {entry.name}: {entry.value}
+          {unit}
         </p>
       </div>
     );
   };
 
 function renderCommitMessage(message: string): ReactNode {
-  const lines = message.split('\n');
+  const lines = message.split("\n");
   const result: ReactNode[] = [];
   let currentBullets: string[] = [];
 
@@ -105,7 +170,7 @@ function renderCommitMessage(message: string): ReactNode {
           {currentBullets.map((item, i) => (
             <li key={i}>{item}</li>
           ))}
-        </ul>
+        </ul>,
       );
       currentBullets = [];
     }
@@ -113,16 +178,16 @@ function renderCommitMessage(message: string): ReactNode {
 
   lines.forEach((line, index) => {
     const trimmedLine = line.trim();
-    if (trimmedLine.startsWith('- ') || trimmedLine.startsWith('* ')) {
+    if (trimmedLine.startsWith("- ") || trimmedLine.startsWith("* ")) {
       currentBullets.push(trimmedLine.substring(2));
-    } else if (trimmedLine === '') {
+    } else if (trimmedLine === "") {
       flushBullets();
     } else {
       flushBullets();
       result.push(
         <p key={`p-${index}`} className={styles.messageLine}>
           {trimmedLine}
-        </p>
+        </p>,
       );
     }
   });
@@ -151,8 +216,8 @@ export function DeveloperDetail({
   onDateRangeChange,
 }: DeveloperDetailProps) {
   const { developerId } = useParams<{ developerId: string }>();
-  const [filterTeam, setFilterTeam] = useState<string>('all');
-  const [filterType, setFilterType] = useState<string>('all');
+  const [filterTeam, setFilterTeam] = useState<string>("all");
+  const [filterType, setFilterType] = useState<string>("all");
 
   const developer = useMemo(() => {
     return developerStats.find((ds) => ds.developer.id === developerId);
@@ -161,37 +226,54 @@ export function DeveloperDetail({
   const developerCommits = useMemo(() => {
     return commits
       .filter((c) => c.developer_id === developerId)
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      .sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+      );
   }, [commits, developerId]);
 
   // Type-based stats calculation (moved before early return to follow Rules of Hooks)
   const typeStats = useMemo(() => {
-    const types = ['develop', 'meeting', 'chore'] as const;
-    const prefixTypes = ['feat', 'fix', 'chore', 'refactor', 'docs'] as const;
+    const types = ["develop", "meeting", "chore"] as const;
+    const prefixTypes = ["feat", "fix", "chore", "refactor", "docs"] as const;
 
     return types.map((type) => {
-      const typeCommits = developerCommits.filter(
-        (c) => (type === 'develop' ? (c.type === 'develop' || c.type === null) : c.type === type)
+      const typeCommits = developerCommits.filter((c) =>
+        type === "develop"
+          ? c.type === "develop" || c.type === null
+          : c.type === type,
       );
       const count = typeCommits.length;
-      const avgScore = count > 0
-        ? typeCommits.reduce((sum, c) => sum + (c.evaluation_total || 0), 0) / count
-        : 0;
-      const totalWorkHours = typeCommits.reduce((sum, c) => sum + (c.work_hours || 0), 0);
-      const totalAiMinutes = typeCommits.reduce((sum, c) => sum + (c.ai_driven_minutes || 0), 0);
-      const avgProductivity = count > 0
-        ? typeCommits.reduce((sum, c) => sum + (c.productivity || 0), 0) / count
-        : 0;
+      const avgScore =
+        count > 0
+          ? typeCommits.reduce((sum, c) => sum + (c.evaluation_total || 0), 0) /
+            count
+          : 0;
+      const totalWorkHours = typeCommits.reduce(
+        (sum, c) => sum + (c.work_hours || 0),
+        0,
+      );
+      const totalAiMinutes = typeCommits.reduce(
+        (sum, c) => sum + (c.ai_driven_minutes || 0),
+        0,
+      );
+      const avgProductivity =
+        count > 0
+          ? typeCommits.reduce((sum, c) => sum + (c.productivity || 0), 0) /
+            count
+          : 0;
 
-      const prefixCounts = type === 'develop'
-        ? prefixTypes.map((prefix) => ({
-            prefix,
-            count: typeCommits.filter((c) =>
-              c.message.toLowerCase().startsWith(`${prefix}(`) ||
-              c.message.toLowerCase().startsWith(`${prefix}:`)
-            ).length,
-          }))
-        : null;
+      const prefixCounts =
+        type === "develop"
+          ? prefixTypes.map((prefix) => ({
+              prefix,
+              count: typeCommits.filter(
+                (c) =>
+                  c.message.toLowerCase().startsWith(`${prefix}(`) ||
+                  c.message.toLowerCase().startsWith(`${prefix}:`),
+              ).length,
+            }))
+          : null;
 
       return {
         type,
@@ -207,15 +289,30 @@ export function DeveloperDetail({
   }, [developerCommits]);
 
   const teamStatsData = useMemo(() => {
-    const teamMap = new Map<string, { develop: number; meeting: number; chore: number; workHours: number; aiDrivenHours: number }>();
+    const teamMap = new Map<
+      string,
+      {
+        develop: number;
+        meeting: number;
+        chore: number;
+        workHours: number;
+        aiDrivenHours: number;
+      }
+    >();
     developerCommits.forEach((c) => {
       const tid = c.team_id;
       if (!tid) return;
-      const prev = teamMap.get(tid) || { develop: 0, meeting: 0, chore: 0, workHours: 0, aiDrivenHours: 0 };
-      const type = c.type || 'develop';
-      if (type === 'develop') prev.develop += 1;
-      else if (type === 'meeting') prev.meeting += 1;
-      else if (type === 'chore') prev.chore += 1;
+      const prev = teamMap.get(tid) || {
+        develop: 0,
+        meeting: 0,
+        chore: 0,
+        workHours: 0,
+        aiDrivenHours: 0,
+      };
+      const type = c.type || "develop";
+      if (type === "develop") prev.develop += 1;
+      else if (type === "meeting") prev.meeting += 1;
+      else if (type === "chore") prev.chore += 1;
       prev.workHours += c.work_hours || 0;
       prev.aiDrivenHours += (c.ai_driven_minutes || 0) / 60;
       teamMap.set(tid, prev);
@@ -223,7 +320,7 @@ export function DeveloperDetail({
     return Array.from(teamMap.entries()).map(([tid, data]) => {
       const team = teams.find((t) => t.id === tid);
       return {
-        name: team?.name || 'Unknown',
+        name: team?.name || "Unknown",
         develop: data.develop,
         meeting: data.meeting,
         chore: data.chore,
@@ -234,18 +331,21 @@ export function DeveloperDetail({
   }, [developerCommits, teams]);
 
   const availableTeams = useMemo(() => {
-    const teamIds = new Set(developerCommits.map((c) => c.team_id).filter(Boolean));
+    const teamIds = new Set(
+      developerCommits.map((c) => c.team_id).filter(Boolean),
+    );
     return teams.filter((t) => teamIds.has(t.id));
   }, [developerCommits, teams]);
 
   const availableTypes = useMemo(() => {
-    return [...new Set(developerCommits.map((c) => c.type || 'develop'))];
+    return [...new Set(developerCommits.map((c) => c.type || "develop"))];
   }, [developerCommits]);
 
   const filteredCommits = useMemo(() => {
     return developerCommits.filter((c) => {
-      if (filterTeam !== 'all' && c.team_id !== filterTeam) return false;
-      if (filterType !== 'all' && (c.type || 'develop') !== filterType) return false;
+      if (filterTeam !== "all" && c.team_id !== filterTeam) return false;
+      if (filterType !== "all" && (c.type || "develop") !== filterType)
+        return false;
       return true;
     });
   }, [developerCommits, filterTeam, filterType]);
@@ -264,7 +364,9 @@ export function DeveloperDetail({
       <div className={styles.container}>
         <div className={styles.notFound}>
           <p>Developer not found</p>
-          <Link to="/developers" className={styles.backLink}>Back to Developers</Link>
+          <Link to="/developers" className={styles.backLink}>
+            Back to Developers
+          </Link>
         </div>
       </div>
     );
@@ -272,35 +374,53 @@ export function DeveloperDetail({
 
   // Calculate evaluation breakdown only from develop type commits
   const developCommitsOnly = developerCommits.filter(
-    (c) => c.type === 'develop' || c.type === null
+    (c) => c.type === "develop" || c.type === null,
   );
   const developCommitCount = developCommitsOnly.length;
   const developEvaluationBreakdown = {
-    complexity: developCommitCount > 0
-      ? developCommitsOnly.reduce((sum, c) => sum + (c.evaluation_complexity || 0), 0) / developCommitCount
-      : 0,
-    volume: developCommitCount > 0
-      ? developCommitsOnly.reduce((sum, c) => sum + (c.evaluation_volume || 0), 0) / developCommitCount
-      : 0,
-    thinking: developCommitCount > 0
-      ? developCommitsOnly.reduce((sum, c) => sum + (c.evaluation_thinking || 0), 0) / developCommitCount
-      : 0,
-    others: developCommitCount > 0
-      ? developCommitsOnly.reduce((sum, c) => sum + (c.evaluation_others || 0), 0) / developCommitCount
-      : 0,
+    complexity:
+      developCommitCount > 0
+        ? developCommitsOnly.reduce(
+            (sum, c) => sum + (c.evaluation_complexity || 0),
+            0,
+          ) / developCommitCount
+        : 0,
+    volume:
+      developCommitCount > 0
+        ? developCommitsOnly.reduce(
+            (sum, c) => sum + (c.evaluation_volume || 0),
+            0,
+          ) / developCommitCount
+        : 0,
+    thinking:
+      developCommitCount > 0
+        ? developCommitsOnly.reduce(
+            (sum, c) => sum + (c.evaluation_thinking || 0),
+            0,
+          ) / developCommitCount
+        : 0,
+    others:
+      developCommitCount > 0
+        ? developCommitsOnly.reduce(
+            (sum, c) => sum + (c.evaluation_others || 0),
+            0,
+          ) / developCommitCount
+        : 0,
   };
 
   const developLinesAdded = developCommitsOnly.reduce(
-    (sum, c) => sum + (c.lines_added || 0), 0,
+    (sum, c) => sum + (c.lines_added || 0),
+    0,
   );
   const developLinesDeleted = developCommitsOnly.reduce(
-    (sum, c) => sum + (c.lines_deleted || 0), 0,
+    (sum, c) => sum + (c.lines_deleted || 0),
+    0,
   );
 
   // Per-type breakdown for stat cards (matching DeveloperStats layout)
-  const devType = typeStats.find(s => s.type === 'develop')!;
-  const meetType = typeStats.find(s => s.type === 'meeting')!;
-  const choreType = typeStats.find(s => s.type === 'chore')!;
+  const devType = typeStats.find((s) => s.type === "develop")!;
+  const meetType = typeStats.find((s) => s.type === "meeting")!;
+  const choreType = typeStats.find((s) => s.type === "chore")!;
   const totalWorkHours = developer.totalWorkHours;
   const devWorkHours = devType.totalWorkHours;
   const meetWorkHours = meetType.totalWorkHours;
@@ -313,23 +433,26 @@ export function DeveloperDetail({
       : 0;
 
   const radarData = [
-    { subject: 'Complexity', value: developEvaluationBreakdown.complexity },
-    { subject: 'Volume', value: developEvaluationBreakdown.volume },
-    { subject: 'Thinking', value: developEvaluationBreakdown.thinking },
-    { subject: 'Others', value: developEvaluationBreakdown.others },
+    { subject: "Complexity", value: developEvaluationBreakdown.complexity },
+    { subject: "Volume", value: developEvaluationBreakdown.volume },
+    { subject: "Thinking", value: developEvaluationBreakdown.thinking },
+    { subject: "Others", value: developEvaluationBreakdown.others },
   ];
 
-  const commitsByDate = developerCommits.reduce((acc, commit) => {
-    const date = new Date(commit.created_at).toLocaleDateString('ko-KR');
-    if (!acc[date]) {
-      acc[date] = { develop: 0, meeting: 0, chore: 0 };
-    }
-    const type = commit.type || 'develop';
-    if (type === 'develop') acc[date].develop += 1;
-    else if (type === 'meeting') acc[date].meeting += 1;
-    else if (type === 'chore') acc[date].chore += 1;
-    return acc;
-  }, {} as Record<string, { develop: number; meeting: number; chore: number }>);
+  const commitsByDate = developerCommits.reduce(
+    (acc, commit) => {
+      const date = new Date(commit.created_at).toLocaleDateString("ko-KR");
+      if (!acc[date]) {
+        acc[date] = { develop: 0, meeting: 0, chore: 0 };
+      }
+      const type = commit.type || "develop";
+      if (type === "develop") acc[date].develop += 1;
+      else if (type === "meeting") acc[date].meeting += 1;
+      else if (type === "chore") acc[date].chore += 1;
+      return acc;
+    },
+    {} as Record<string, { develop: number; meeting: number; chore: number }>,
+  );
 
   const commitChartData = Object.entries(commitsByDate)
     .map(([date, data]) => ({ date, ...data }))
@@ -337,22 +460,28 @@ export function DeveloperDetail({
     .slice(-14);
 
   // Daily work hours and AI time data (per type)
-  const timeByDate = developerCommits.reduce((acc, commit) => {
-    const date = new Date(commit.created_at).toLocaleDateString('ko-KR');
-    if (!acc[date]) {
-      acc[date] = { develop: 0, meeting: 0, chore: 0, aiTime: 0 };
-    }
-    const type = commit.type || 'develop';
-    if (type === 'develop') {
-      acc[date].develop += commit.work_hours || 0;
-      acc[date].aiTime += (commit.ai_driven_minutes || 0) / 60;
-    } else if (type === 'meeting') {
-      acc[date].meeting += commit.work_hours || 0;
-    } else if (type === 'chore') {
-      acc[date].chore += commit.work_hours || 0;
-    }
-    return acc;
-  }, {} as Record<string, { develop: number; meeting: number; chore: number; aiTime: number }>);
+  const timeByDate = developerCommits.reduce(
+    (acc, commit) => {
+      const date = new Date(commit.created_at).toLocaleDateString("ko-KR");
+      if (!acc[date]) {
+        acc[date] = { develop: 0, meeting: 0, chore: 0, aiTime: 0 };
+      }
+      const type = commit.type || "develop";
+      if (type === "develop") {
+        acc[date].develop += commit.work_hours || 0;
+        acc[date].aiTime += (commit.ai_driven_minutes || 0) / 60;
+      } else if (type === "meeting") {
+        acc[date].meeting += commit.work_hours || 0;
+      } else if (type === "chore") {
+        acc[date].chore += commit.work_hours || 0;
+      }
+      return acc;
+    },
+    {} as Record<
+      string,
+      { develop: number; meeting: number; chore: number; aiTime: number }
+    >,
+  );
 
   const timeChartData = Object.entries(timeByDate)
     .map(([date, data]) => ({
@@ -368,15 +497,18 @@ export function DeveloperDetail({
     .slice(-14);
 
   // Daily lines of code data (develop commits only)
-  const linesByDate = developCommitsOnly.reduce((acc, commit) => {
-    const date = new Date(commit.created_at).toLocaleDateString('ko-KR');
-    if (!acc[date]) {
-      acc[date] = { added: 0, deleted: 0 };
-    }
-    acc[date].added += commit.lines_added || 0;
-    acc[date].deleted += commit.lines_deleted || 0;
-    return acc;
-  }, {} as Record<string, { added: number; deleted: number }>);
+  const linesByDate = developCommitsOnly.reduce(
+    (acc, commit) => {
+      const date = new Date(commit.created_at).toLocaleDateString("ko-KR");
+      if (!acc[date]) {
+        acc[date] = { added: 0, deleted: 0 };
+      }
+      acc[date].added += commit.lines_added || 0;
+      acc[date].deleted += commit.lines_deleted || 0;
+      return acc;
+    },
+    {} as Record<string, { added: number; deleted: number }>,
+  );
 
   const linesChartData = Object.entries(linesByDate)
     .map(([date, data]) => ({
@@ -387,7 +519,8 @@ export function DeveloperDetail({
     .reverse()
     .slice(-14);
 
-  const teamName = (developer.developer as { teams?: { name: string } }).teams?.name || '-';
+  const teamName =
+    (developer.developer as { teams?: { name: string } }).teams?.name || "-";
 
   const pieChartData = typeStats
     .filter((stat) => stat.count > 0)
@@ -398,32 +531,40 @@ export function DeveloperDetail({
 
   const timeComparisonData = typeStats
     .map((stat) => {
-      if (stat.type === 'develop') {
+      if (stat.type === "develop") {
         const hours = stat.totalAiMinutes / 60;
-        return hours > 0 ? { name: 'Develop (AI Time)', value: parseFloat(hours.toFixed(1)) } : null;
+        return hours > 0
+          ? { name: "Develop (AI Time)", value: parseFloat(hours.toFixed(1)) }
+          : null;
       } else {
         return stat.totalWorkHours > 0
-          ? { name: `${stat.label} (Work Hours)`, value: parseFloat(stat.totalWorkHours.toFixed(1)) }
+          ? {
+              name: `${stat.label} (Work Hours)`,
+              value: parseFloat(stat.totalWorkHours.toFixed(1)),
+            }
           : null;
       }
     })
     .filter((item): item is { name: string; value: number } => item !== null);
 
-  const PIE_COLORS = ['#6366f1', '#22c55e', '#f59e0b'];
-  const PREFIX_COLORS = ['#6366f1', '#ef4444', '#f59e0b', '#8b5cf6', '#06b6d4'];
+  const PIE_COLORS = ["#6366f1", "#22c55e", "#f59e0b"];
+  const PREFIX_COLORS = ["#6366f1", "#ef4444", "#f59e0b", "#8b5cf6", "#06b6d4"];
 
-  const developStats = typeStats.find((s) => s.type === 'develop');
-  const prefixPieData = developStats?.prefixCounts
-    ?.filter((p) => p.count > 0)
-    .map((p) => ({
-      name: p.prefix,
-      value: p.count,
-    })) ?? [];
+  const developStats = typeStats.find((s) => s.type === "develop");
+  const prefixPieData =
+    developStats?.prefixCounts
+      ?.filter((p) => p.count > 0)
+      .map((p) => ({
+        name: p.prefix,
+        value: p.count,
+      })) ?? [];
 
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <Link to="/developers" className={styles.backLink}>&larr; Back to Developers</Link>
+        <Link to="/developers" className={styles.backLink}>
+          &larr; Back to Developers
+        </Link>
         <h2 className={styles.title}>{developer.developer.name}</h2>
         <span className={styles.team}>{teamName}</span>
       </div>
@@ -439,66 +580,78 @@ export function DeveloperDetail({
           <span className={styles.statLabel}>Total Commits</span>
           <span className={styles.statValue}>{developer.totalCommits}</span>
           <span className={styles.statSub}>
-            <span style={{ color: '#6366f1' }}>Dev {devType.count}</span>
-            {' / '}
-            <span style={{ color: '#22c55e' }}>Meet {meetType.count}</span>
-            {' / '}
-            <span style={{ color: '#f59e0b' }}>Chore {choreType.count}</span>
+            <span style={{ color: "#6366f1" }}>Dev {devType.count}</span>
+            {" / "}
+            <span style={{ color: "#22c55e" }}>Meet {meetType.count}</span>
+            {" / "}
+            <span style={{ color: "#f59e0b" }}>Chore {choreType.count}</span>
           </span>
         </div>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Avg Score</span>
-          <span className={styles.statValue}>{devType.avgScore.toFixed(1)}</span>
+          <span className={styles.statValue}>
+            {devType.avgScore.toFixed(1)}
+          </span>
           <span className={styles.statSub}>
-            <span style={{ color: '#a78bfa' }}>
+            <span style={{ color: "#a78bfa" }}>
               Total {(devType.avgScore * devType.count).toFixed(0)}
             </span>
-            {' / '}
-            <span style={{ color: '#6366f1' }}>Dev {devType.count}</span>
+            {" / "}
+            <span style={{ color: "#6366f1" }}>Dev {devType.count}</span>
           </span>
         </div>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Human Work Hours</span>
           <span className={styles.statValue}>{totalWorkHours.toFixed(1)}h</span>
           <span className={styles.statSub}>
-            <span style={{ color: '#6366f1' }}>
+            <span style={{ color: "#6366f1" }}>
               Dev {devWorkHours.toFixed(1)}h
             </span>
-            {' / '}
-            <span style={{ color: '#f59e0b' }}>
+            {" / "}
+            <span style={{ color: "#f59e0b" }}>
               Chore {choreWorkHours.toFixed(1)}h
             </span>
-            {' / '}
-            <span style={{ color: '#22c55e' }}>
+            {" / "}
+            <span style={{ color: "#22c55e" }}>
               Meet {meetWorkHours.toFixed(1)}h
             </span>
           </span>
           <div className={styles.statHoverTip}>
-            <span style={{ color: '#888', fontSize: '0.75rem' }}>Daily Avg ({dayCount}days)</span>
-            <span style={{ fontSize: '1.5rem', fontWeight: 600, color: '#6366f1' }}>
+            <span style={{ color: "#888", fontSize: "0.75rem" }}>
+              Daily Avg ({dayCount}days)
+            </span>
+            <span
+              style={{ fontSize: "1.5rem", fontWeight: 600, color: "#6366f1" }}
+            >
               {(totalWorkHours / dayCount).toFixed(1)}h
             </span>
           </div>
         </div>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Human with AI Work Hours</span>
-          <span className={styles.statValue}>{aiWithHumanHours.toFixed(1)}h</span>
+          <span className={styles.statValue}>
+            {aiWithHumanHours.toFixed(1)}h
+          </span>
           <span className={styles.statSub}>
-            <span style={{ color: '#ef4444' }}>
+            <span style={{ color: "#ef4444" }}>
               AI {(devAiMinutes / 60).toFixed(1)}h
             </span>
-            {' / '}
-            <span style={{ color: '#f59e0b' }}>
+            {" / "}
+            <span style={{ color: "#f59e0b" }}>
               Chore {choreWorkHours.toFixed(1)}h
             </span>
-            {' / '}
-            <span style={{ color: '#22c55e' }}>
+            {" / "}
+            <span style={{ color: "#22c55e" }}>
               Meet {meetWorkHours.toFixed(1)}h
             </span>
           </span>
           <div className={styles.statHoverTip}>
-            <span style={{ color: '#888', fontSize: '0.75rem' }}>Daily Avg ({dayCount}days)</span>
-            <span style={{ fontSize: '1.5rem', fontWeight: 600, color: '#6366f1' }}>
+            <span style={{ color: "#888", fontSize: "0.75rem" }}>
+              Daily Avg ({dayCount}days)
+            </span>
+            <span
+              style={{ fontSize: "1.5rem", fontWeight: 600, color: "#6366f1" }}
+            >
               {(aiWithHumanHours / dayCount).toFixed(1)}h
             </span>
           </div>
@@ -507,22 +660,24 @@ export function DeveloperDetail({
           <span className={styles.statLabel}>Avg Productivity</span>
           <span className={styles.statValue}>{productivity.toFixed(0)}%</span>
           <span className={styles.statSub}>
-            <span style={{ color: '#6366f1' }}>
+            <span style={{ color: "#6366f1" }}>
               Dev {devWorkHours.toFixed(1)}h
             </span>
-            {' / '}
-            <span style={{ color: '#ef4444' }}>
+            {" / "}
+            <span style={{ color: "#ef4444" }}>
               AI {(devAiMinutes / 60).toFixed(1)}h
             </span>
           </span>
         </div>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Total Lines</span>
-          <span className={styles.statValue}>{developLinesAdded + developLinesDeleted}</span>
+          <span className={styles.statValue}>
+            {developLinesAdded + developLinesDeleted}
+          </span>
           <span className={styles.statSub}>
-            <span style={{ color: '#22c55e' }}>+{developLinesAdded}</span>
-            {' / '}
-            <span style={{ color: '#ef4444' }}>-{developLinesDeleted}</span>
+            <span style={{ color: "#22c55e" }}>+{developLinesAdded}</span>
+            {" / "}
+            <span style={{ color: "#ef4444" }}>-{developLinesDeleted}</span>
           </span>
         </div>
       </div>
@@ -531,7 +686,7 @@ export function DeveloperDetail({
         {typeStats.map((stat) => (
           <div
             key={stat.type}
-            className={`${styles.typeStatsCard} ${stat.type === 'develop' ? styles.typeStatsCardDevelop : styles.typeStatsCardSmall}`}
+            className={`${styles.typeStatsCard} ${stat.type === "develop" ? styles.typeStatsCardDevelop : styles.typeStatsCardSmall}`}
           >
             <h4 className={styles.typeStatsTitle}>{stat.label}</h4>
             <div className={styles.typeStatsGrid}>
@@ -539,7 +694,7 @@ export function DeveloperDetail({
                 <span className={styles.typeStatValue}>{stat.count}</span>
                 <span className={styles.typeStatLabel}>Commits</span>
               </div>
-              {stat.type === 'develop' && stat.prefixCounts && (
+              {stat.type === "develop" && stat.prefixCounts && (
                 <div className={styles.prefixCountsContainer}>
                   {stat.prefixCounts.map((p) => (
                     <span key={p.prefix} className={styles.prefixBadge}>
@@ -548,24 +703,32 @@ export function DeveloperDetail({
                   ))}
                 </div>
               )}
-              {stat.type === 'develop' && (
+              {stat.type === "develop" && (
                 <div className={styles.typeStatItem}>
-                  <span className={styles.typeStatValue}>{stat.avgScore.toFixed(1)}</span>
+                  <span className={styles.typeStatValue}>
+                    {stat.avgScore.toFixed(1)}
+                  </span>
                   <span className={styles.typeStatLabel}>Avg Score</span>
                 </div>
               )}
               <div className={styles.typeStatItem}>
-                <span className={styles.typeStatValue}>{stat.totalWorkHours.toFixed(1)}h</span>
+                <span className={styles.typeStatValue}>
+                  {stat.totalWorkHours.toFixed(1)}h
+                </span>
                 <span className={styles.typeStatLabel}>Work Hours</span>
               </div>
-              {stat.type === 'develop' && (
+              {stat.type === "develop" && (
                 <>
                   <div className={styles.typeStatItem}>
-                    <span className={styles.typeStatValue}>{(stat.totalAiMinutes / 60).toFixed(1)}h</span>
+                    <span className={styles.typeStatValue}>
+                      {(stat.totalAiMinutes / 60).toFixed(1)}h
+                    </span>
                     <span className={styles.typeStatLabel}>AI Time</span>
                   </div>
                   <div className={styles.typeStatItem}>
-                    <span className={styles.typeStatValue}>{stat.avgProductivity.toFixed(0)}%</span>
+                    <span className={styles.typeStatValue}>
+                      {stat.avgProductivity.toFixed(0)}%
+                    </span>
                     <span className={styles.typeStatLabel}>Productivity</span>
                   </div>
                 </>
@@ -575,7 +738,7 @@ export function DeveloperDetail({
         ))}
       </div>
 
-      <div className={styles.chartCard} style={{ marginBottom: '1.5rem' }}>
+      <div className={styles.chartCard} style={{ marginBottom: "1.5rem" }}>
         <h3 className={styles.chartTitle}>Commits Over Time</h3>
         <div className={styles.chartContainer}>
           <ResponsiveContainer width="100%" height={300}>
@@ -583,17 +746,33 @@ export function DeveloperDetail({
               <CartesianGrid strokeDasharray="3 3" stroke="#333" />
               <XAxis dataKey="date" stroke="#888" fontSize={12} />
               <YAxis stroke="#888" />
-              <Tooltip content={renderStackedTooltip('')} />
+              <Tooltip content={renderStackedTooltip("")} />
               <Legend />
-              <Bar dataKey="develop" name="Develop" stackId="commits" fill="#6366f1" />
-              <Bar dataKey="meeting" name="Meeting" stackId="commits" fill="#22c55e" />
-              <Bar dataKey="chore" name="Chore" stackId="commits" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+              <Bar
+                dataKey="develop"
+                name="Develop"
+                stackId="commits"
+                fill="#6366f1"
+              />
+              <Bar
+                dataKey="meeting"
+                name="Meeting"
+                stackId="commits"
+                fill="#22c55e"
+              />
+              <Bar
+                dataKey="chore"
+                name="Chore"
+                stackId="commits"
+                fill="#f59e0b"
+                radius={[4, 4, 0, 0]}
+              />
             </BarChart>
           </ResponsiveContainer>
         </div>
       </div>
 
-      <div className={styles.chartCard} style={{ marginBottom: '1.5rem' }}>
+      <div className={styles.chartCard} style={{ marginBottom: "1.5rem" }}>
         <h3 className={styles.chartTitle}>Work Hours & AI Time Over Time</h3>
         <div className={styles.chartContainer}>
           <ResponsiveContainer width="100%" height={300}>
@@ -603,18 +782,52 @@ export function DeveloperDetail({
               <YAxis stroke="#888" unit="h" />
               <Tooltip content={renderWorkHoursTooltip} />
               <Legend />
-              <Bar dataKey="develop" name="Develop" stackId="h" fill="#6366f1" />
-              <Bar dataKey="meeting" name="Meeting" stackId="h" fill="#22c55e" />
-              <Bar dataKey="chore" name="Chore" stackId="h" fill="#f59e0b" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="aiTime" name="AI Driven" stackId="ai" fill="#ef4444" />
-              <Bar dataKey="aiMeeting" name="Meeting" stackId="ai" fill="#22c55e" legendType="none" />
-              <Bar dataKey="aiChore" name="Chore" stackId="ai" fill="#f59e0b" legendType="none" radius={[4, 4, 0, 0]} />
+              <Bar
+                dataKey="develop"
+                name="Develop"
+                stackId="h"
+                fill="#6366f1"
+              />
+              <Bar
+                dataKey="meeting"
+                name="Meeting"
+                stackId="h"
+                fill="#22c55e"
+              />
+              <Bar
+                dataKey="chore"
+                name="Chore"
+                stackId="h"
+                fill="#f59e0b"
+                radius={[4, 4, 0, 0]}
+              />
+              <Bar
+                dataKey="aiTime"
+                name="AI Driven"
+                stackId="ai"
+                fill="#ef4444"
+              />
+              <Bar
+                dataKey="aiMeeting"
+                name="Meeting"
+                stackId="ai"
+                fill="#22c55e"
+                legendType="none"
+              />
+              <Bar
+                dataKey="aiChore"
+                name="Chore"
+                stackId="ai"
+                fill="#f59e0b"
+                legendType="none"
+                radius={[4, 4, 0, 0]}
+              />
             </BarChart>
           </ResponsiveContainer>
         </div>
       </div>
 
-      <div className={styles.chartCard} style={{ marginBottom: '1.5rem' }}>
+      <div className={styles.chartCard} style={{ marginBottom: "1.5rem" }}>
         <h3 className={styles.chartTitle}>Lines of Code Over Time</h3>
         <div className={styles.chartContainer}>
           <ResponsiveContainer width="100%" height={300}>
@@ -622,7 +835,7 @@ export function DeveloperDetail({
               <CartesianGrid strokeDasharray="3 3" stroke="#333" />
               <XAxis dataKey="date" stroke="#888" fontSize={12} />
               <YAxis stroke="#888" />
-              <Tooltip content={renderStackedTooltip(' lines')} />
+              <Tooltip content={renderStackedTooltip(" lines")} />
               <Legend />
               {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
               <Bar
@@ -685,20 +898,34 @@ export function DeveloperDetail({
                 <CartesianGrid strokeDasharray="3 3" stroke="#333" />
                 <XAxis dataKey="name" stroke="#888" />
                 <YAxis stroke="#888" allowDecimals={false} />
-                <Tooltip content={renderStackedTooltip('')} />
+                <Tooltip content={renderStackedTooltip("")} />
                 <Legend />
-                <Bar dataKey="develop" name="Develop" stackId="commits" fill="#6366f1" />
-                <Bar dataKey="meeting" name="Meeting" stackId="commits" fill="#22c55e" />
-                <Bar dataKey="chore" name="Chore" stackId="commits" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                <Bar
+                  dataKey="develop"
+                  name="Develop"
+                  stackId="commits"
+                  fill="#6366f1"
+                />
+                <Bar
+                  dataKey="meeting"
+                  name="Meeting"
+                  stackId="commits"
+                  fill="#22c55e"
+                />
+                <Bar
+                  dataKey="chore"
+                  name="Chore"
+                  stackId="commits"
+                  fill="#f59e0b"
+                  radius={[4, 4, 0, 0]}
+                />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
-
       </div>
 
       <div className={styles.chartsGrid}>
-
         <div className={styles.chartCard}>
           <h3 className={styles.chartTitle}>Evaluation Breakdown</h3>
           <div className={styles.chartContainer}>
@@ -732,14 +959,19 @@ export function DeveloperDetail({
                   outerRadius={100}
                   paddingAngle={2}
                   dataKey="value"
-                  label={({ percent }) => `${((percent ?? 0) * 100).toFixed(0)}%`}
+                  label={({ percent }) =>
+                    `${((percent ?? 0) * 100).toFixed(0)}%`
+                  }
                   labelLine={false}
                 >
                   {pieChartData.map((_, index) => (
-                    <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={PIE_COLORS[index % PIE_COLORS.length]}
+                    />
                   ))}
                 </Pie>
-                <Tooltip content={renderPieTooltip(' commits')} />
+                <Tooltip content={renderPieTooltip(" commits")} />
                 <Legend />
               </PieChart>
             </ResponsiveContainer>
@@ -760,14 +992,19 @@ export function DeveloperDetail({
                     outerRadius={100}
                     paddingAngle={2}
                     dataKey="value"
-                    label={({ percent }) => `${((percent ?? 0) * 100).toFixed(0)}%`}
+                    label={({ percent }) =>
+                      `${((percent ?? 0) * 100).toFixed(0)}%`
+                    }
                     labelLine={false}
                   >
                     {prefixPieData.map((_, index) => (
-                      <Cell key={`cell-${index}`} fill={PREFIX_COLORS[index % PREFIX_COLORS.length]} />
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={PREFIX_COLORS[index % PREFIX_COLORS.length]}
+                      />
                     ))}
                   </Pie>
-                  <Tooltip content={renderPieTooltip(' commits')} />
+                  <Tooltip content={renderPieTooltip(" commits")} />
                   <Legend />
                 </PieChart>
               </ResponsiveContainer>
@@ -789,14 +1026,19 @@ export function DeveloperDetail({
                     outerRadius={100}
                     paddingAngle={2}
                     dataKey="value"
-                    label={({ percent }) => `${((percent ?? 0) * 100).toFixed(0)}%`}
+                    label={({ percent }) =>
+                      `${((percent ?? 0) * 100).toFixed(0)}%`
+                    }
                     labelLine={false}
                   >
                     {timeComparisonData.map((_, index) => (
-                      <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={PIE_COLORS[index % PIE_COLORS.length]}
+                      />
                     ))}
                   </Pie>
-                  <Tooltip content={renderPieTooltip('h')} />
+                  <Tooltip content={renderPieTooltip("h")} />
                   <Legend />
                 </PieChart>
               </ResponsiveContainer>
@@ -807,19 +1049,21 @@ export function DeveloperDetail({
 
       <div className={styles.commitsSection}>
         <div className={styles.commitsSectionHeader}>
-          <h3 className={styles.chartTitle}>Commit History ({filteredCommits.length})</h3>
+          <h3 className={styles.chartTitle}>
+            Commit History ({filteredCommits.length})
+          </h3>
           <div className={styles.commitFilters}>
             <div className={styles.filterGroup}>
               <button
-                className={`${styles.filterBtn} ${filterTeam === 'all' ? styles.filterBtnActive : ''}`}
-                onClick={() => setFilterTeam('all')}
+                className={`${styles.filterBtn} ${filterTeam === "all" ? styles.filterBtnActive : ""}`}
+                onClick={() => setFilterTeam("all")}
               >
                 All
               </button>
               {availableTeams.map((t) => (
                 <button
                   key={t.id}
-                  className={`${styles.filterBtn} ${filterTeam === t.id ? styles.filterBtnActive : ''}`}
+                  className={`${styles.filterBtn} ${filterTeam === t.id ? styles.filterBtnActive : ""}`}
                   onClick={() => setFilterTeam(t.id)}
                 >
                   {t.name}
@@ -829,15 +1073,15 @@ export function DeveloperDetail({
             <div className={styles.filterDivider} />
             <div className={styles.filterGroup}>
               <button
-                className={`${styles.filterBtn} ${filterType === 'all' ? styles.filterBtnActive : ''}`}
-                onClick={() => setFilterType('all')}
+                className={`${styles.filterBtn} ${filterType === "all" ? styles.filterBtnActive : ""}`}
+                onClick={() => setFilterType("all")}
               >
                 All
               </button>
               {availableTypes.map((t) => (
                 <button
                   key={t}
-                  className={`${styles.filterBtn} ${filterType === t ? styles.filterBtnActive : ''}`}
+                  className={`${styles.filterBtn} ${filterType === t ? styles.filterBtnActive : ""}`}
                   onClick={() => setFilterType(t)}
                 >
                   {t.charAt(0).toUpperCase() + t.slice(1)}
@@ -856,16 +1100,25 @@ export function DeveloperDetail({
                   <div className={styles.commitHeaderLeft}>
                     {commit.team_id && (
                       <span className={styles.commitTeamBadge}>
-                        {teams.find((t) => t.id === commit.team_id)?.name || 'Unknown'}
+                        {teams.find((t) => t.id === commit.team_id)?.name ||
+                          "Unknown"}
                       </span>
                     )}
-                    <span className={styles.commitId}>{commit.commit_id.substring(0, 8)}</span>
-                    <span className={styles[`typeBadge${(commit.type || 'develop').charAt(0).toUpperCase()}${(commit.type || 'develop').slice(1)}`] || styles.typeBadgeDevelop}>
-                      {(commit.type || 'develop').toUpperCase()}
+                    <span className={styles.commitId}>
+                      {commit.commit_id.substring(0, 8)}
+                    </span>
+                    <span
+                      className={
+                        styles[
+                          `typeBadge${(commit.type || "develop").charAt(0).toUpperCase()}${(commit.type || "develop").slice(1)}`
+                        ] || styles.typeBadgeDevelop
+                      }
+                    >
+                      {(commit.type || "develop").toUpperCase()}
                     </span>
                   </div>
                   <span className={styles.commitDate}>
-                    {new Date(commit.created_at).toLocaleString('ko-KR')}
+                    {new Date(commit.created_at).toLocaleString("ko-KR")}
                   </span>
                 </div>
                 <div className={styles.commitMessage}>
@@ -873,26 +1126,39 @@ export function DeveloperDetail({
                 </div>
                 <div className={styles.commitMeta}>
                   <span className={styles.evalBadge}>
-                    Score: {commit.evaluation_total ?? '-'}
+                    Score: {commit.evaluation_total ?? "-"}
                   </span>
                   <span className={styles.evalDetail}>
-                    (C:{commit.evaluation_complexity ?? 0} V:{commit.evaluation_volume ?? 0} T:{commit.evaluation_thinking ?? 0} O:{commit.evaluation_others ?? 0})
+                    (C:{commit.evaluation_complexity ?? 0} V:
+                    {commit.evaluation_volume ?? 0} T:
+                    {commit.evaluation_thinking ?? 0} O:
+                    {commit.evaluation_others ?? 0})
                   </span>
-                  {(commit.lines_added || commit.lines_deleted) ? (
+                  {commit.lines_added || commit.lines_deleted ? (
                     <span className={styles.linesBadge}>
-                      <span style={{ color: '#22c55e' }}>+{commit.lines_added || 0}</span>
-                      {' / '}
-                      <span style={{ color: '#ef4444' }}>-{commit.lines_deleted || 0}</span>
+                      <span style={{ color: "#22c55e" }}>
+                        +{commit.lines_added || 0}
+                      </span>
+                      {" / "}
+                      <span style={{ color: "#ef4444" }}>
+                        -{commit.lines_deleted || 0}
+                      </span>
                     </span>
                   ) : null}
                   {commit.work_hours && (
-                    <span className={styles.timeBadge}>H: {commit.work_hours}h</span>
+                    <span className={styles.timeBadge}>
+                      H: {commit.work_hours}h
+                    </span>
                   )}
                   {commit.ai_driven_minutes && (
-                    <span className={styles.timeBadge}>AI: {commit.ai_driven_minutes}m</span>
+                    <span className={styles.timeBadge}>
+                      AI: {commit.ai_driven_minutes}m
+                    </span>
                   )}
                   {commit.productivity && (
-                    <span className={styles.productivityBadge}>{commit.productivity}%</span>
+                    <span className={styles.productivityBadge}>
+                      {commit.productivity}%
+                    </span>
                   )}
                 </div>
                 {commit.comment && (

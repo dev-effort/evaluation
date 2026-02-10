@@ -40,18 +40,12 @@ export function TeamDetail({
     return teamStats.find((ts) => ts.team.id === teamId);
   }, [teamStats, teamId]);
 
-  // Get team member IDs for filtering commits
-  const teamMemberIds = useMemo(() => {
-    if (!team) return [];
-    return team.developers.map((d) => d.developer.id);
-  }, [team]);
-
   // Calculate prefix counts for team's develop commits
   const prefixCounts = useMemo(() => {
     const prefixTypes = ['feat', 'fix', 'chore', 'refactor', 'docs'] as const;
     const teamDevelopCommits = commits.filter(
       (c) =>
-        teamMemberIds.includes(c.developer_id || '') &&
+        c.team_id === teamId &&
         (c.type === 'develop' || c.type === null)
     );
 
@@ -63,24 +57,24 @@ export function TeamDetail({
           c.message.toLowerCase().startsWith(`${prefix}:`)
       ).length,
     }));
-  }, [commits, teamMemberIds]);
+  }, [commits, teamId]);
 
   // Calculate day count for daily averages
   const dayCount = useMemo(() => {
-    const teamCommits = commits.filter((c) => teamMemberIds.includes(c.developer_id || ''));
+    const teamCommits = commits.filter((c) => c.team_id === teamId);
     const dates = new Set<string>();
     teamCommits.forEach((c) => {
       const d = new Date(c.created_at);
       dates.add(`${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`);
     });
     return dates.size || 1;
-  }, [commits, teamMemberIds]);
+  }, [commits, teamId]);
 
   // Daily lines of code data for the team (develop commits only)
   const linesChartData = useMemo(() => {
     const teamDevelopCommits = commits.filter(
       (c) =>
-        teamMemberIds.includes(c.developer_id || '') &&
+        c.team_id === teamId &&
         (c.type === 'develop' || c.type === null)
     );
 
@@ -102,7 +96,7 @@ export function TeamDetail({
       }))
       .reverse()
       .slice(-14);
-  }, [commits, teamMemberIds]);
+  }, [commits, teamId]);
 
   if (!team) {
     return (

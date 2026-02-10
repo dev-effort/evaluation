@@ -90,6 +90,13 @@ export function DateFilter({ startDate, endDate, onFilterChange }: DateFilterPro
     onFilterChange('', '');
   };
 
+  const setToday = () => {
+    const todayStr = formatDateStr(now);
+    setLocalStart(todayStr);
+    setLocalEnd(todayStr);
+    onFilterChange(todayStr, todayStr);
+  };
+
   const setThisMonth = () => {
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -122,6 +129,7 @@ export function DateFilter({ startDate, endDate, onFilterChange }: DateFilterPro
     <div className={styles.container}>
       <div className={styles.presets}>
         <button onClick={setThisMonth} className={styles.presetBtn}>This Month</button>
+        <button onClick={setToday} className={styles.presetBtn}>Today</button>
         {weeks.map((week) => (
           <button
             key={week.weekNumber}
